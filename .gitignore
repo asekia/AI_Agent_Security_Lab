@@ -20,6 +20,7 @@ ENV/
 # IDEs
 .idea/
 .vscode/
+.agents/
 
 # Generated local lab data
 *.tmp
