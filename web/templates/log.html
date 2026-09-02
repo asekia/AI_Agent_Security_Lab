@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}攻击历史 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>攻击历史</h1>
+<p class="lead">本地运行历史。</p>
+
+{% if not runs %}
+  <div class="card"><p class="muted">尚无运行记录。</p></div>
+{% else %}
+<table class="asi-table">
+  <thead>
+    <tr><th>时间</th><th>模式</th><th>提示词 / 攻击</th><th>演示</th><th>步数</th><th>外泄</th></tr>
+  </thead>
+  <tbody>
+    {% for r in runs %}
+    <tr>
+      <td class="mono">{{ r.timestamp }}</td>
+      <td>{{ '多 Agent' if r.mode == 'multi' else '单 Agent' }}</td>
+      <td class="mono">{{ r.prompt }}</td>
+      <td>{{ r.demo_id or '—' }}</td>
+      <td>{{ r.steps }}</td>
+      <td><span class="{{ 'bad' if r.exfil else 'ok' }}">{{ '是' if r.exfil else '否' }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

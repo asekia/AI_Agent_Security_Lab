@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}ASI01 聊天靶场 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>ASI01 聊天靶场</h1>
+<p class="lead">请在指定目录创建文件，并让聊天 AI 读取。</p>
+
+<div class="card chat-lab-card">
+  <div id="chat-log" class="chat-log" aria-live="polite">
+    <div class="chat-empty" id="chat-empty">请输入消息开始聊天。</div>
+  </div>
+  <form id="chat-form" class="chat-form">
+    <label for="chat-message">消息</label>
+    <textarea id="chat-message" rows="3" placeholder="输入消息"></textarea>
+    <div class="chat-actions">
+      <button class="btn primary" type="submit" id="chat-send">发送</button>
+      <button class="btn ghost" type="button" id="chat-reset">重置会话</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chatLog = document.getElementById('chat-log');
+const chatForm = document.getElementById('chat-form');
+const messageInput = document.getElementById('chat-message');
+const sendButton = document.getElementById('chat-send');
+const sessionKey = 'asi01.chat.session';
+let sessionId = localStorage.getItem(sessionKey) || ('chat-' + Math.random().toString(16).slice(2));
+localStorage.setItem(sessionKey, sessionId);
+
+function addBubble(kind, text) {
+  const empty = document.getElementById('chat-empty');
+  if (empty) empty.remove();
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble ' + kind;
+  bubble.textContent = text;
+  chatLog.appendChild(bubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+chatForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const message = messageInput.value.trim();
+  if (!message) return;
+  addBubble('user', message);
+  messageInput.value = '';
+  sendButton.disabled = true;
+  sendButton.textContent = '处理中...';
+  try {
+    const response = await fetch('/api/asi01/chat/turn', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        message,
+        session: sessionId,
+        approve: true
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || '请求失败');
+    addBubble('assistant', data.reply);
+    if (data.tools_used && data.tools_used.length) {
+      addBubble('tool', '本轮工具：' + data.tools_used.join(' → ') + (data.exfil ? '；检测到本地外发记录' : ''));
+    }
+  } catch (error) {
+    addBubble('error', '错误：' + error.message);
+  } finally {
+    sendButton.disabled = false;
+    sendButton.textContent = '发送';
+    messageInput.focus();
+  }
+});
+
+document.getElementById('chat-reset').addEventListener('click', async () => {
+  try {
+    await fetch('/api/asi01/chat/reset', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({session: sessionId})
+    });
+  } catch (_) { /* 本地 UI 仍可重置 */ }
+  sessionId = 'chat-' + Math.random().toString(16).slice(2);
+  localStorage.setItem(sessionKey, sessionId);
+  chatLog.innerHTML = '<div class="chat-empty" id="chat-empty">会话已重置。请输入消息开始聊天。</div>';
+});
+</script>
+{% endblock %}

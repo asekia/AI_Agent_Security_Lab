@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDEs
+.idea/
+.vscode/
+
+# Generated local lab data
+*.tmp
+*.db
+*.sqlite
+*.sqlite3
+lab/outbox.jsonl
+lab/memory_store.json
+lab/state/
+lab/web/run_log.jsonl
+_task_trace/
+
+# Unidentified local artifact
+/0
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LangGraph 漏洞靶场{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="banner">
+    <strong>LOCAL-ONLY SECURITY LAB — no network calls</strong>
+    <span class="banner-sub">LangGraph Agentic Security 靶场 (ASI01-ASI10) · 所有 email / network 动作均为本地模拟 · 请勿暴露到网络</span>
+  </div>
+
+  <!-- Apple 风格全局导航：44px 纯黑栏 -->
+  <nav class="global-nav">
+    <div class="nav-inner">
+      <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-name">LangGraph 漏洞靶场</span>
+      </a>
+      <div class="nav-right">
+        <a class="nav-utility" href="{{ url_for('agent_page') }}">Agent 框架</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理</a>
+        <span class="mode-badge" id="mode-badge">模式: {{ llm_mode if llm_mode is defined else 'mock' }}</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 布局：左侧可收缩目录 + 内容区 -->
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="站点目录">
+      <div class="side-head">
+        <button id="sidebar-toggle" class="sidebar-toggle" title="收缩/展开目录" aria-label="切换目录">
+          <span class="toggle-icon" id="toggle-icon">«</span>
+        </button>
+      </div>
+      <div class="side-scroll">
+        <div class="side-group">总览</div>
+        <a class="side-link" href="{{ url_for('index') }}"><span class="side-label">仪表盘</span></a>
+
+        <div class="side-group">攻击演示</div>
+        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi01') }}"><span class="side-label">ASI01 目标劫持</span></a>
+        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi06') }}"><span class="side-label">ASI06 记忆投毒</span></a>
+        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi07') }}"><span class="side-label">ASI07 消息伪造</span></a>
+        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi09') }}"><span class="side-label">ASI09 审批滥用</span></a>
+
+        <div class="side-group">Agent 框架</div>
+        <a class="side-link" href="{{ url_for('agent_page') }}"><span class="side-label">Agent 框架</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi01') }}"><span class="side-label">ASI01 原理</span></a>
+        <a class="side-link" href="{{ url_for('asichat') }}"><span class="side-label">ASI01 聊天靶场</span></a>
+
+        <div class="side-group">工具</div>
+        <a class="side-link" href="{{ url_for('playground') }}"><span class="side-label">游乐场</span></a>
+        <a class="side-link" href="{{ url_for('trace_page') }}"><span class="side-label">任务轨迹</span></a>
+        <a class="side-link" href="{{ url_for('log_page') }}"><span class="side-label">攻击历史</span></a>
+        <a class="side-link" href="{{ url_for('settings_page') }}"><span class="side-label">设置</span></a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="container">
+        {% block content %}{% endblock %}
+      </div>
+      <footer class="footer">
+        LangGraph 漏洞靶场 · 仅限授权安全教学演示 · 绑定 127.0.0.1
+      </footer>
+    </main>
+  </div>
+
+  {% block scripts %}{% endblock %}
+  <script>
+  // 侧边栏收缩状态：localStorage 持久化 + 移动端自动收缩
+  (function () {
+    var sidebar = document.getElementById('sidebar');
+    var toggle = document.getElementById('sidebar-toggle');
+    var icon = document.getElementById('toggle-icon');
+    if (!sidebar || !toggle) return;
+    var KEY = 'lab.sidebar.collapsed';
+
+    function apply(state) {
+      sidebar.classList.toggle('collapsed', state);
+      icon.textContent = state ? '»' : '«';
+    }
+    function isNarrow() { return window.innerWidth <= 900; }
+
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) { /* 忽略 */ }
+    apply(saved === null ? isNarrow() : saved === '1');
+
+    toggle.addEventListener('click', function () {
+      var next = !sidebar.classList.contains('collapsed');
+      apply(next);
+      try { localStorage.setItem(KEY, next ? '1' : '0'); } catch (e) { /* 忽略 */ }
+    });
+  })();
+
+  // 高亮当前页面对应的侧边栏项
+  (function () {
+    var path = location.pathname;
+    document.querySelectorAll('.side-link').forEach(function (a) {
+      if (a.getAttribute('href') === path) a.classList.add('active');
+    });
+  })();
+  </script>
+</body>
+</html>

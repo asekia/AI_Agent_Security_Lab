@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+{% if error %}
+  <h1>未知文档</h1>
+  <p class="error">{{ error }}</p>
+  <a class="btn" href="{{ url_for('index') }}">返回仪表盘</a>
+{% else %}
+<div class="principle-header">
+  <h1>{{ title }}</h1>
+  <p class="meta">
+    原理文档 · 来源: <span class="mono">docs/asi01-principle.md</span>
+    · <a class="btn" href="{{ url_for('docs_file', filename=doc_id + '-principle.md') }}">下载 Markdown</a>
+  </p>
+</div>
+<div class="principle-body">
+  {{ body | safe }}
+</div>
+<p class="muted" style="margin-top:24px;">
+  关联页面: <a href="{{ url_for('agent_page') }}">Agent 框架（运行 ASI01 实验）</a> ·
+  <a href="{{ url_for('asi_page', demo_id='asi01') }}">ASI01 演示</a>
+</p>
+{% endif %}
+{% endblock %}

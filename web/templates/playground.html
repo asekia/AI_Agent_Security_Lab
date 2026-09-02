@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}游乐场 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>游乐场 (Playground)</h1>
+<p class="lead">输入自定义提示词驱动 agent，查看每一步的工具调用与结果。可切换单 Agent / 多 Agent 模式。</p>
+
+<div class="card">
+  <h3>输入提示词</h3>
+  <form id="play-form">
+    <label for="prompt">提示词 / 场景</label>
+    <textarea id="prompt" name="prompt" rows="4" placeholder="例如: asi01_goal_hijack 或 请总结 support_kb.md 文档"></textarea>
+    <div class="form-row">
+      <label for="mode">模式</label>
+      <select id="mode" name="mode">
+        <option value="single">单 Agent</option>
+        <option value="multi">多 Agent</option>
+      </select>
+      <button type="submit" class="btn primary">运行</button>
+    </div>
+  </form>
+  <span id="run-status" class="status"></span>
+</div>
+
+<div class="card">
+  <h3>揭示隐藏注入载荷</h3>
+  <p class="muted">加载 seed/documents/support_kb.md，显示其中的 HTML 注释 + 不可见 Unicode 指令块。</p>
+  <button class="btn" id="reveal-btn">揭示隐藏载荷</button>
+  <div id="hidden-container" style="display:none;">
+    <h4>HTML 注释载荷</h4>
+    <pre id="html-comment" class="payload"></pre>
+    <h4>不可见 Unicode 指令块</h4>
+    <pre id="invisible-unicode" class="payload"></pre>
+  </div>
+</div>
+
+<div id="trace-container" class="trace-container" style="display:none;">
+  <h2>工具调用轨迹</h2>
+  <div id="trace"></div>
+  <h2>外发记录 (outbox)</h2>
+  <div id="outbox"></div>
+  <div id="exfil-banner" class="exfil" style="display:none;">检测到向 attacker@evil.lab 的数据外泄</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('play-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const prompt = document.getElementById('prompt').value.trim();
+  const mode = document.getElementById('mode').value;
+  const status = document.getElementById('run-status');
+  if (!prompt) { status.textContent = '请输入提示词'; status.className = 'status bad'; return; }
+  status.textContent = '运行中...';
+  status.className = 'status running';
+  try {
+    const resp = await fetch('/api/playground', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, mode })
+    });
+    const data = await resp.json();
+    if (data.error) { status.textContent = '错误: ' + data.error; status.className = 'status bad'; return; }
+    status.textContent = '完成 (' + data.trace.length + ' 步)';
+    status.className = 'status ok';
+    renderTrace(data);
+  } catch (err) {
+    status.textContent = '请求失败: ' + err;
+    status.className = 'status bad';
+  }
+});
+
+document.getElementById('reveal-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('reveal-btn');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+  try {
+    const resp = await fetch('/api/documents/support_kb.md?reveal=true');
+    const data = await resp.json();
+    document.getElementById('html-comment').textContent = data.hidden.html_comment || '(无)';
+    document.getElementById('invisible-unicode').textContent = data.hidden.invisible_unicode || '(无)';
+    document.getElementById('hidden-container').style.display = 'block';
+  } catch (err) {
+    alert('加载失败: ' + err);
+  }
+  btn.disabled = false;
+  btn.textContent = '揭示隐藏载荷';
+});
+
+function renderTrace(data) {
+  const container = document.getElementById('trace-container');
+  container.style.display = 'block';
+  const traceEl = document.getElementById('trace');
+  traceEl.innerHTML = '';
+  data.trace.forEach(step => {
+    const div = document.createElement('div');
+    div.className = 'trace-step ' + step.type;
+    let html = '<span class="step-num">#' + step.step + '</span> ';
+    if (step.type === 'tool_call') {
+      html += '<span class="tag call">工具调用</span> <span class="mono">' + esc(step.name) + '</span>';
+      html += '<pre class="args">' + esc(JSON.stringify(step.args, null, 2)) + '</pre>';
+    } else if (step.type === 'tool_result') {
+      html += '<span class="tag result">工具结果</span> <span class="mono">' + esc(step.name) + '</span>';
+      html += '<pre class="res">' + esc(step.result) + '</pre>';
+    } else {
+      html += '<span class="tag node">节点</span> <span class="mono">' + esc(step.name) + '</span>';
+      html += '<pre class="res">' + esc(step.result) + '</pre>';
+    }
+    div.innerHTML = html;
+    traceEl.appendChild(div);
+  });
+
+  const outboxEl = document.getElementById('outbox');
+  outboxEl.innerHTML = '';
+  if (!data.outbox_entries || data.outbox_entries.length === 0) {
+    outboxEl.innerHTML = '<p class="muted">本次运行未写入外发记录。</p>';
+  } else {
+    data.outbox_entries.forEach(e => {
+      const pre = document.createElement('pre');
+      pre.className = 'outbox-entry';
+      pre.textContent = JSON.stringify(e, null, 2);
+      outboxEl.appendChild(pre);
+    });
+  }
+  document.getElementById('exfil-banner').style.display = data.exfil ? 'block' : 'none';
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+</script>
+{% endblock %}

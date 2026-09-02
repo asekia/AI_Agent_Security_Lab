@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}设置 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>设置</h1>
+<p class="lead">切换 Mock（默认，离线）与真实 LLM 模式。真实模式会发起网络调用，请谨慎使用。</p>
+
+<div class="card">
+  <h3>LLM 模式</h3>
+  <form id="settings-form">
+    <div class="form-row">
+      <label for="mode">模式</label>
+      <select id="mode" name="mode">
+        <option value="mock" {{ 'selected' if config.mode == 'mock' else '' }}>Mock（离线，默认）</option>
+        <option value="real" {{ 'selected' if config.mode == 'real' else '' }}>真实 LLM（联网）</option>
+      </select>
+    </div>
+    <div id="real-fields" style="{{ 'display:block' if config.mode == 'real' else 'display:none' }}">
+      <div class="form-row">
+        <label for="provider">Provider</label>
+        <select id="provider" name="provider">
+          <option value="openai" {{ 'selected' if config.provider == 'openai' else '' }}>OpenAI 兼容</option>
+          <option value="anthropic" {{ 'selected' if config.provider == 'anthropic' else '' }}>Anthropic</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="api_key">API Key</label>
+        <input type="password" id="api_key" name="api_key" placeholder="仅保存在内存，不写入磁盘">
+      </div>
+      <div class="form-row">
+        <label for="base_url">Base URL</label>
+        <input type="text" id="base_url" name="base_url" placeholder="https://api.openai.com/v1" value="{{ config.base_url }}">
+      </div>
+      <div class="form-row">
+        <label for="model">Model</label>
+        <input type="text" id="model" name="model" placeholder="gpt-4o" value="{{ config.model }}">
+      </div>
+      <p class="warn">注意：真实模式会向您配置的端点发起网络调用。API key 仅保存在进程内存（os.environ），重启后即失效。</p>
+    </div>
+    <button type="submit" class="btn primary">保存设置</button>
+    <span id="save-status" class="status"></span>
+  </form>
+</div>
+
+<div class="card">
+  <h3>本地 Sink 检查</h3>
+  <p class="muted">查看本地数据落盘位置（全部本地，无网络）。</p>
+  <ul class="status-list">
+    <li>邮件外发: <span class="mono">lab/outbox.jsonl</span></li>
+    <li>记忆存储: <span class="mono">lab/memory_store.json</span></li>
+    <li>检查点: <span class="mono">lab/state/checkpoints.db</span></li>
+    <li>运行历史: <span class="mono">lab/web/run_log.jsonl</span></li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const modeSel = document.getElementById('mode');
+const realFields = document.getElementById('real-fields');
+modeSel.addEventListener('change', () => {
+  realFields.style.display = modeSel.value === 'real' ? 'block' : 'none';
+});
+
+document.getElementById('settings-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('save-status');
+  const body = {
+    mode: modeSel.value,
+    provider: document.getElementById('provider').value,
+    api_key: document.getElementById('api_key').value,
+    base_url: document.getElementById('base_url').value,
+    model: document.getElementById('model').value,
+  };
+  status.textContent = '保存中...';
+  status.className = 'status running';
+  try {
+    const resp = await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (data.error) { status.textContent = '错误: ' + data.error; status.className = 'status bad'; return; }
+    status.textContent = '已保存 (模式: ' + data.mode + ')';
+    status.className = 'status ok';
+    const badge = document.getElementById('mode-badge');
+    if (badge) badge.textContent = '模式: ' + data.mode;
+    document.getElementById('api_key').value = '';
+  } catch (err) {
+    status.textContent = '请求失败: ' + err;
+    status.className = 'status bad';
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% block title %}Agent 框架 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>Agent 框架 (LangChain / LangGraph)</h1>
+<p class="lead">
+  基于 <span class="mono">langchain_core.BaseChatModel</span> + <span class="mono">create_react_agent</span> 的真实 Agent 循环：
+  模型观察工具结果后自主决策下一步调用，推理轨迹全量可审计。
+  可切换 <b>Mock</b>（内容感知、离线、确定性）与 <b>真实 LLM</b>（任意 OpenAI 兼容端点）。
+</p>
+<p class="meta">
+  原理与防护（为什么会有这个漏洞、怎么防御）:
+  <a href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理文档</a>
+</p>
+
+<div class="card">
+  <h3>运行场景</h3>
+  <form id="agent-form">
+    <div class="form-row">
+      <label for="scenario">场景</label>
+      <select id="scenario" name="scenario">
+        {% for s in scenarios %}
+        <option value="{{ s.id }}" {{ 'disabled' if s.status != 'wired' else '' }}>
+          {{ s.id|upper }}{{ '（已接入）' if s.status == 'wired' else '（未接入）' }} · {{ s.title }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="backend">LLM 后端</label>
+      <select id="backend" name="backend">
+        <option value="mock">Mock（离线确定性，默认）</option>
+        <option value="real">真实 LLM（OpenAI 兼容端点）</option>
+      </select>
+    </div>
+    <div id="real-fields" style="display:none;">
+      <div class="form-row">
+        <label for="base_url">Base URL</label>
+        <input type="text" id="base_url" name="base_url" placeholder="https://api.deepseek.com/v1 或 http://localhost:11434/v1 (Ollama)">
+      </div>
+      <div class="form-row">
+        <label for="api_key">API Key</label>
+        <input type="password" id="api_key" name="api_key" placeholder="仅保存在进程内存，不写入磁盘">
+      </div>
+      <div class="form-row">
+        <label for="model">Model</label>
+        <input type="text" id="model" name="model" placeholder="deepseek-chat / gpt-4o-mini / qwen2.5">
+      </div>
+      <p class="warn">注意：真实模式会向您配置的端点发起网络调用（OpenAI / DeepSeek / Ollama / vLLM / LM Studio 等）。真实模型的劫持结果具有不确定性——这正是教学点。</p>
+    </div>
+    <div class="form-row">
+      <label for="defense">防御变体</label>
+      <select id="defense" name="defense">
+        <option value="off">关（展示漏洞）</option>
+        <option value="on">开（输入净化 + 指令边界 + 收件人白名单）</option>
+      </select>
+      <label for="auto_approve" style="min-width:auto;">HITL 自动批准</label>
+      <input type="checkbox" id="auto_approve" checked>
+    </div>
+    <button type="submit" class="btn primary">运行 Agent</button>
+    <span id="run-status" class="status"></span>
+  </form>
+</div>
+
+<div class="card" id="scenario-info" style="display:none;">
+  <h3 id="scenario-title"></h3>
+  <p class="meta" id="scenario-desc"></p>
+  <p class="muted" id="scenario-defense"></p>
+</div>
+
+<div id="result-container" style="display:none;">
+  <h2>裁决</h2>
+  <div id="verdict-banner"></div>
+  <h2>Agent 推理轨迹</h2>
+  <div id="trace"></div>
+  <h2>外发记录 (outbox)</h2>
+  <div id="outbox"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const scenarios = {{ scenarios | tojson }};
+const scenarioSel = document.getElementById('scenario');
+const backendSel = document.getElementById('backend');
+const realFields = document.getElementById('real-fields');
+
+function updateScenarioInfo() {
+  const id = scenarioSel.value;
+  const s = scenarios.find(x => x.id === id);
+  const info = document.getElementById('scenario-info');
+  if (!s) { info.style.display = 'none'; return; }
+  info.style.display = 'block';
+  document.getElementById('scenario-title').textContent = s.title;
+  document.getElementById('scenario-desc').textContent = s.description || '';
+  document.getElementById('scenario-defense').textContent = s.status === 'wired'
+    ? ('防御对照: ' + (s.defense_note || '—'))
+    : ('状态: ' + s.stub_note);
+}
+scenarioSel.addEventListener('change', updateScenarioInfo);
+updateScenarioInfo();
+
+backendSel.addEventListener('change', () => {
+  realFields.style.display = backendSel.value === 'real' ? 'block' : 'none';
+});
+
+document.getElementById('agent-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('run-status');
+  const body = {
+    scenario: scenarioSel.value,
+    backend: backendSel.value,
+    defense: document.getElementById('defense').value === 'on',
+    auto_approve: document.getElementById('auto_approve').checked,
+    base_url: document.getElementById('base_url').value.trim(),
+    api_key: document.getElementById('api_key').value.trim(),
+    model: document.getElementById('model').value.trim(),
+  };
+  status.textContent = '运行中...';
+  status.className = 'status running';
+  try {
+    const resp = await fetch('/api/agent/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await resp.json();
+    if (data.error) {
+      status.textContent = '错误: ' + data.error;
+      status.className = 'status bad';
+      return;
+    }
+    status.textContent = '完成 (' + data.trace.length + ' 步)';
+    status.className = 'status ok';
+    renderResult(data);
+    document.getElementById('api_key').value = '';
+  } catch (err) {
+    status.textContent = '请求失败: ' + err;
+    status.className = 'status bad';
+  }
+});
+
+function renderResult(data) {
+  const container = document.getElementById('result-container');
+  container.style.display = 'block';
+
+  const verdict = data.verdict || {};
+  const banner = document.getElementById('verdict-banner');
+  banner.className = 'verdict ' + (verdict.hijacked ? 'hijacked' : 'safe');
+  banner.innerHTML = (verdict.hijacked ? '目标劫持成功 (Hijacked)' : '未发生劫持 (Safe)')
+    + '<div class="verdict-reason">' + esc(verdict.reason || '') + '</div>'
+    + '<div class="verdict-meta">后端: ' + esc(data.backend) + ' · 防御: ' + (data.defense ? '开' : '关')
+    + ' · 外泄: ' + (data.exfil ? '是 (attacker@evil.lab)' : '否') + '</div>';
+
+  const traceEl = document.getElementById('trace');
+  traceEl.innerHTML = '';
+  data.trace.forEach(ev => {
+    const div = document.createElement('div');
+    div.className = 'trace-step ' + ev.type;
+    let html = '<span class="step-num">#' + ev.step + '</span> ';
+    if (ev.type === 'thought') {
+      html += '<span class="tag thought">思考</span><pre class="thought-text">' + esc(ev.content || '') + '</pre>';
+    } else if (ev.type === 'tool_call') {
+      html += '<span class="tag call">工具调用</span> <span class="mono">' + esc(ev.name || '') + '</span>';
+      html += '<pre class="args">' + esc(JSON.stringify(ev.args || {}, null, 2)) + '</pre>';
+    } else if (ev.type === 'tool_result') {
+      html += '<span class="tag result">工具结果</span> <span class="mono">' + esc(ev.name || '') + '</span>';
+      html += '<pre class="res">' + esc(ev.result || '') + '</pre>';
+    } else if (ev.type === 'denied') {
+      html += '<span class="tag denied">审批拒绝</span> <span class="mono">' + esc(ev.name || '') + '</span>';
+      html += '<pre class="res">' + esc(ev.result || '') + '</pre>';
+    } else {
+      html += '<span class="tag final">最终回答</span><pre class="final-text">' + esc(ev.content || '') + '</pre>';
+    }
+    div.innerHTML = html;
+    traceEl.appendChild(div);
+  });
+
+  const outboxEl = document.getElementById('outbox');
+  outboxEl.innerHTML = '';
+  if (!data.outbox_entries || data.outbox_entries.length === 0) {
+    outboxEl.innerHTML = '<p class="muted">本次运行未写入外发记录。</p>';
+  } else {
+    data.outbox_entries.forEach(e => {
+      const pre = document.createElement('pre');
+      pre.className = 'outbox-entry';
+      pre.textContent = JSON.stringify(e, null, 2);
+      outboxEl.appendChild(pre);
+    });
+  }
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+</script>
+{% endblock %}

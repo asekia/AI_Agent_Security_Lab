@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1 class="hero-title">LangGraph 漏洞靶场</h1>
+  <p class="hero-sub">Agentic Security 教学实验室 · OWASP ASI01–ASI10 · 所有动作均为本地模拟，无真实网络调用</p>
+  <div class="hero-actions">
+    <a class="btn primary btn-lg" href="{{ url_for('agent_page') }}">启动 Agent 框架</a>
+    <a class="btn ghost btn-lg" href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理与防护</a>
+  </div>
+</section>
+
+<div class="cards">
+  <div class="card">
+    <h3>组件状态</h3>
+    <ul class="status-list">
+      <li>虚拟环境 (.venv): <span class="{{ 'ok' if venv_ok else 'bad' }}">{{ '正常' if venv_ok else '缺失' }}</span></li>
+      <li>依赖 (langgraph/flask): <span class="{{ 'ok' if deps_ok else 'bad' }}">{{ '正常' if deps_ok else '缺失' }}</span></li>
+      <li>LLM 模式: <span class="{{ 'ok' if llm_mode == 'mock' else 'warn' }}">{{ 'Mock（离线）' if llm_mode == 'mock' else '真实（联网）' }}</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>快捷运行</h3>
+    <div class="quick-btns">
+      <a class="btn" href="{{ url_for('asi_page', demo_id='asi01') }}">ASI01 目标劫持</a>
+      <a class="btn" href="{{ url_for('asi_page', demo_id='asi02') }}">ASI02 工具滥用</a>
+      <a class="btn" href="{{ url_for('asi_page', demo_id='asi06') }}">ASI06 记忆投毒</a>
+      <a class="btn" href="{{ url_for('asi_page', demo_id='asi07') }}">ASI07 消息伪造</a>
+      <a class="btn" href="{{ url_for('asi_page', demo_id='asi09') }}">ASI09 审批滥用</a>
+    </div>
+    <div class="quick-links">
+      <a href="{{ url_for('agent_page') }}">Agent 框架（真实 AI 模块 / ASI01）</a> ·
+      <a href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理与防护</a> ·
+      <a href="{{ url_for('playground') }}">游乐场（自定义提示词）</a> ·
+      <a href="{{ url_for('trace_page') }}">任务轨迹</a> ·
+      <a href="{{ url_for('log_page') }}">攻击历史</a> ·
+      <a href="{{ url_for('settings_page') }}">设置</a>
+    </div>
+  </div>
+</div>
+
+<h2>ASI → 组件映射表</h2>
+<table class="asi-table">
+  <thead>
+    <tr><th>ASI</th><th>漏洞名称</th><th>组件 / 位置</th><th>安全变体</th></tr>
+  </thead>
+  <tbody>
+    {% for row in asi_rows %}
+    <tr>
+      <td class="asi-id">{{ row[0] }}</td>
+      <td>{{ row[1] }}</td>
+      <td class="mono">{{ row[2] }}</td>
+      <td>{{ row[3] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
