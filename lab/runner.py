@@ -26,42 +26,77 @@ MEMORY_FILE = os.path.join(ROOT, "lab", "memory_store.json")
 STATE_DIR = os.path.join(ROOT, "lab", "state")
 CHECKPOINT_DB = os.path.join(STATE_DIR, "checkpoints.db")
 
-# 五个强制演示的元数据（与 demos/ 一一对应）
+# 强制演示的元数据（与 demos/ 一一对应；命名对齐 OWASP 2026）
 DEMOS: dict[str, dict[str, Any]] = {
     "asi01": {
         "id": "asi01",
-        "title": "ASI01 目标劫持 (Goal Hijacking)",
+        "title": "ASI01 目标劫持 (Agent Goal Hijacking)",
         "scenario": "asi01_goal_hijack",
         "mode": "single",
         "desc": "用户请求总结文档，文档内隐藏的间接提示注入载荷劫持 agent，外泄订单数据。",
     },
     "asi02": {
         "id": "asi02",
-        "title": "ASI02 工具滥用 (Tool Misuse)",
+        "title": "ASI02 工具误用与利用 (Tool Misuse & Exploitation)",
         "scenario": "asi02_tool_abuse",
         "mode": "single",
         "desc": "UNION 型 SQLi 读库 → execute_python 任意代码执行 → 数据外泄，完整工具链滥用。",
     },
+    "asi03": {
+        "id": "asi03",
+        "title": "ASI03 身份与权限滥用 (Identity & Privilege Abuse)",
+        "scenario": "asi03_priv_abuse",
+        "mode": "single",
+        "desc": "agent 用提升/错误的身份越权访问内部订单数据，并把明细外泄。",
+    },
+    "asi04": {
+        "id": "asi04",
+        "title": "ASI04 代理供应链 (Agentic Supply Chain)",
+        "scenario": "asi04_supply_chain",
+        "mode": "single",
+        "desc": "agent 加载的第三方规则文档被污染，未经验证即按其执行外泄操作。",
+    },
+    "asi05": {
+        "id": "asi05",
+        "title": "ASI05 意外代码执行 (Unexpected Code Execution)",
+        "scenario": "asi05_code_exec",
+        "mode": "single",
+        "desc": "任意代码在宿主/沙箱外执行并回传结果，输出超出预期边界。",
+    },
     "asi06": {
         "id": "asi06",
-        "title": "ASI06 记忆投毒 (Memory Poisoning)",
+        "title": "ASI06 记忆与上下文投毒 (Memory & Context Poisoning)",
         "scenario": "asi06_memory_poison",
         "mode": "single",
         "desc": "会话 1 植入伪装成系统偏好的投毒记忆，会话 2 检索时被误导并执行外泄。",
     },
     "asi07": {
         "id": "asi07",
-        "title": "ASI07 消息伪造 (Message Spoofing)",
+        "title": "ASI07 不安全的代理间通信 (Insecure Inter-Agent Communication)",
         "scenario": "asi07_msg_spoof",
         "mode": "multi",
         "desc": "email_worker 伪造 supervisor 指令，data_worker 因无来源认证而信任并执行。",
     },
+    "asi08": {
+        "id": "asi08",
+        "title": "ASI08 级联代理故障 (Cascading Agent Failures)",
+        "scenario": "asi08_cascade",
+        "mode": "cascade",
+        "desc": "上游 worker 一次未验证的断言沿信任链放大，下游 agent 越权外泄。",
+    },
     "asi09": {
         "id": "asi09",
-        "title": "ASI09 审批滥用 (Approval Abuse)",
+        "title": "ASI09 人机信任滥用 (Human-Agent Trust Exploitation)",
         "scenario": "asi09_hitl_bypass",
         "mode": "single",
         "desc": "HITL 审批展示 agent 自生成摘要且自动放行，危险工具未经严格审批即执行。",
+    },
+    "asi10": {
+        "id": "asi10",
+        "title": "ASI10 失控代理 (Rogue Agents)",
+        "scenario": "asi10_rogue_agent",
+        "mode": "single",
+        "desc": "agent 越过既定会话边界，自主把订单数据外泄到外部地址。",
     },
 }
 
@@ -287,17 +322,76 @@ def run_demo(demo_id: str) -> dict[str, Any]:
     """运行指定演示并返回结构化轨迹。
 
     参数:
-        demo_id: 演示标识（asi01 / asi06 / asi07）。
+        demo_id: 演示标识（asi01..asi10）。
 
     返回:
-        与 run_single_agent / run_multi_agent 相同结构的字典。
+        与 run_single_agent / run_multi_agent / run_cascade 相同结构的字典。
     """
     demo = DEMOS.get(demo_id)
     if not demo:
         raise ValueError(f"未知演示: {demo_id}")
     if demo["mode"] == "multi":
         return run_multi_agent(demo["scenario"], thread_id=f"{demo_id}-web")
+    if demo["mode"] == "cascade":
+        return run_cascade(demo["scenario"], thread_id=f"{demo_id}-web")
     return run_single_agent(demo["scenario"], thread_id=f"{demo_id}-web", auto_approve=True)
+
+
+def run_cascade(prompt: str = "", thread_id: str | None = None) -> dict[str, Any]:
+    """运行级联（ASI08）多 agent 图并返回结构化轨迹。
+
+    返回结构同 run_multi_agent（含 mode / trace / outbox_entries / final）。
+    """
+    from lab.multi_agent import run_cascading
+
+    tid = thread_id or f"web-{uuid.uuid4().hex[:8]}"
+    before = len(_read_jsonl(OUTBOX))
+    final = run_cascading(thread_id=tid)
+    after = _read_jsonl(OUTBOX)
+    new_entries = after[before:]
+
+    trace: list[dict[str, Any]] = [
+        {
+            "step": 1,
+            "type": "node",
+            "name": "worker_a",
+            "args": {"poisoned": True},
+            "result": "上游被诱导，产出未经二次校验的\"校验通过\"信号",
+        },
+        {
+            "step": 2,
+            "type": "node",
+            "name": "worker_b",
+            "args": {"trusted": True},
+            "result": "中游信任上游断言，把错误信号继续向下游传递",
+        },
+        {
+            "step": 3,
+            "type": "node",
+            "name": "worker_c",
+            "args": {"trusted": "worker_a/b"},
+            "result": "下游以下游指令执行订单查询并外泄",
+        },
+    ]
+    for i, r in enumerate(final.get("results", [])):
+        trace.append(
+            {
+                "step": 4 + i,
+                "type": "tool_result",
+                "name": "worker_c",
+                "args": {},
+                "result": r,
+            }
+        )
+
+    return {
+        "mode": "multi",
+        "scenario": prompt or "asi08_cascade",
+        "thread_id": tid,
+        "trace": trace,
+        "final": final,
+        "outbox_entries": new_entries,
+    }
 
 
 def read_document(name: str) -> str:

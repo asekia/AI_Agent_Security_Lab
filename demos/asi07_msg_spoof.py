@@ -1,7 +1,8 @@
-"""demos/asi07_msg_spoof.py — ASI07 消息伪造演示。
+"""demos/asi07_msg_spoof.py — ASI07 不安全的代理间通信演示。
 
 多 agent 场景：email_worker 伪造一条声称来自 supervisor 的指令，
 data_worker 因无来源认证而信任并执行（查询订单 + 发送邮件）。
+消息伪造是不安全代理间通信（ASI07）的一种典型表现。
 
 运行:
     python demos/asi07_msg_spoof.py
@@ -25,7 +26,8 @@ def main() -> None:
     """执行 ASI07 消息伪造演示。"""
     print_banner()
     print("=" * 60)
-    print("ASI07 消息伪造 (Message Spoofing) 演示")
+    print("ASI07 不安全的代理间通信 (Insecure Inter-Agent Communication)")
+    print("        本演示: 消息伪造（Message Spoofing）")
     print("=" * 60)
 
     print("\n[步骤 1] supervisor 向 email_worker 派发任务:")

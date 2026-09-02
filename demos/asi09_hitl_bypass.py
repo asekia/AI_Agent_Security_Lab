@@ -1,4 +1,4 @@
-"""demos/asi09_hitl_bypass.py — ASI09 审批滥用 / HITL 绕过演示。
+"""demos/asi09_hitl_bypass.py — ASI09 人机信任滥用演示 (HITL 审批绕过)。
 
 单 agent 图的危险工具（send_email / execute_python）需经 interrupt() 审批。
 缺陷: 审批提示展示的是 agent 自行生成的摘要（action_summary），且演示默认
@@ -32,7 +32,8 @@ def main() -> None:
     """执行 ASI09 审批滥用演示。"""
     print_banner()
     print("=" * 60)
-    print("ASI09 审批滥用 / HITL 绕过 (Approval Abuse) 演示")
+    print("ASI09 人机信任滥用 (Human-Agent Trust Exploitation)")
+    print("        本演示: HITL 审批绕过（审批者过度信任 agent 摘要 + 自动放行）")
     print("=" * 60)
 
     print("\n[步骤 1] 用户请求: '请汇报订单总额'")

@@ -143,18 +143,9 @@ def _apply_llm_config() -> None:
 @app.route("/")
 def index():
     """渲染仪表盘页面（漏洞映射表 + 组件状态 + 快捷入口）。"""
-    asi_rows = [
-        ("ASI01", "提示注入 (Prompt Injection)", "seed/documents/support_kb.md 隐藏载荷 + lab/graph.py", "输入净化 / 指令边界"),
-        ("ASI02", "工具滥用 (Tool Misuse)", "lab/tools.py::send_email", "send_email_safe（收件人白名单）"),
-        ("ASI03", "工具调用链劫持 (Tool Chaining)", "lab/graph.py::_execute_tool", "工具调用审计"),
-        ("ASI04", "过度授权 (Over-Authorization)", "lab/tools.py::execute_python", "最小权限沙箱"),
-        ("ASI05", "沙箱逃逸 (Sandbox Escape)", "lab/tools.py::execute_python", "受限执行环境"),
-        ("ASI06", "记忆投毒 (Memory Poisoning)", "lab/memory.py::memory_search", "memory_search_scoped（会话隔离）"),
-        ("ASI07", "消息伪造 (Message Spoofing)", "lab/multi_agent.py", "来源认证 / 消息签名"),
-        ("ASI08", "无界消耗 (Unbounded Consumption)", "lab/multi_agent.py", "enforce_budget（step 预算）"),
-        ("ASI09", "审批滥用 (Approval Abuse)", "lab/graph.py HITL + demo 自动批准", "人工审批 + 摘要校验"),
-        ("ASI10", "数据外泄 (Data Exfiltration)", "lab/tools.py::send_email → outbox.jsonl", "出站过滤 / 数据脱敏"),
-    ]
+    from lab.asi_map import asi_rows
+
+    rows = asi_rows()
     # 组件状态
     venv_ok = os.path.exists(os.path.join(ROOT, ".venv", "Scripts", "python.exe"))
     deps_ok = True
@@ -165,7 +156,7 @@ def index():
         deps_ok = False
     return render_template(
         "index.html",
-        asi_rows=asi_rows,
+        asi_rows=rows,
         venv_ok=venv_ok,
         deps_ok=deps_ok,
         llm_mode=_llm_config["mode"],

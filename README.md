@@ -34,12 +34,17 @@ python seed\seed_db.py
 # 5. 运行冒烟测试（验证全部组件）
 python smoke_test.py
 
-# 6. 运行五个强制演示
+# 6. 逐项运行 10 个 OWASP 演示（ASI01–ASI10）
 python demos\asi01_goal_hijack.py
 python demos\asi02_tool_abuse.py
+python demos\asi03_priv_abuse.py
+python demos\asi04_supply_chain.py
+python demos\asi05_code_exec.py
 python demos\asi06_memory_poison.py
 python demos\asi07_msg_spoof.py
+python demos\asi08_cascade.py
 python demos\asi09_hitl_bypass.py
+python demos\asi10_rogue_agent.py
 
 # 7. 运行 Agent 框架演示（LangChain/LangGraph，ASI01）
 python demos\agent_asi01.py                # mock 后端，无防御（预期: 劫持成功）
@@ -98,20 +103,24 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
 
 ---
 
-## 3. ASI → 组件映射表
+## 3. ASI → 组件映射表（命名对齐 OWASP Agentic AI Top 10 · 2026）
 
-| ASI | 漏洞名称 | 组件 / 位置 | 漏洞注释 | 安全变体 |
-|-----|----------|-------------|----------|----------|
-| **ASI01** | 提示注入 (Prompt Injection) | `seed/documents/support_kb.md` 隐藏载荷 + `lab/graph.py` | `# [VULN] ASI01` | 输入净化 / 指令边界 |
-| **ASI02** | 工具滥用 (Tool Misuse) | `lab/tools.py::send_email` | `# [VULN] ASI02` | `send_email_safe`（收件人白名单） |
-| **ASI03** | 工具调用链劫持 (Tool Chaining) | `lab/graph.py::_execute_tool` | `# [VULN] ASI03` | 工具调用审计 |
-| **ASI04** | 过度授权 (Over-Authorization) | `lab/tools.py::execute_python` | `# [VULN] ASI04` | 最小权限沙箱 |
-| **ASI05** | 沙箱逃逸 (Sandbox Escape) | `lab/tools.py::execute_python` | `# [VULN] ASI05` | 受限执行环境 |
-| **ASI06** | 记忆投毒 (Memory Poisoning) | `lab/memory.py::memory_search` | `# [VULN] ASI06` | `memory_search_scoped`（会话隔离） |
-| **ASI07** | 消息伪造 (Message Spoofing) | `lab/multi_agent.py` | `# [VULN] ASI07` | 来源认证 / 消息签名 |
-| **ASI08** | 无界消耗 (Unbounded Consumption) | `lab/multi_agent.py` | `# [VULN] ASI08` | `enforce_budget`（step 预算） |
-| **ASI09** | 审批滥用 (Approval Abuse) | `lab/graph.py` HITL + demo 自动批准 | `# [VULN] ASI09` | 人工审批 + 摘要校验 |
-| **ASI10** | 数据外泄 (Data Exfiltration) | `lab/tools.py::send_email` → `outbox.jsonl` | `# [VULN] ASI10` | 出站过滤 / 数据脱敏 |
+> ASI 编号有新旧草案之分。下表以 **OWASP 2026 官方定义**为准：
+> ASI03=身份与权限滥用、ASI07=不安全代理间通信、ASI08=级联故障、ASI10=失控代理。
+> 项目内可用 `python demos/asiNN_*.py` 或 Web「/asi/<id>」逐项演示。
+
+| ASI | 漏洞名称 (2026 官方) | 组件 / 位置 | 漏洞注释 | 安全变体 |
+|-----|----------------------|-------------|----------|----------|
+| **ASI01** | 目标劫持 (Agent Goal Hijacking · 经间接提示注入) | `seed/documents/*.md` 隐藏载荷 + `lab/graph.py` / `lab/framework` | `# [VULN] ASI01` | 输入净化 / 指令边界 |
+| **ASI02** | 工具误用与利用 (Tool Misuse & Exploitation) | `lab/tools.py::query_orders / execute_python / send_email` | `# [VULN] ASI02` | `query_orders_safe`（参数化）/ `send_email_safe`（收件人白名单） |
+| **ASI03** | 身份与权限滥用 (Identity & Privilege Abuse) | `lab/tools.py::execute_python`（会话内提权冒充） | `# [VULN] ASI03` | 最小权限工具集 / 会话身份隔离 |
+| **ASI04** | 代理供应链 (Agentic Supply Chain) | `seed/documents/rules.md` + `lab/tools.py::read_document` | `# [VULN] ASI04` | 规则 / 依赖来源签名 + 供应链锁定 |
+| **ASI05** | 意外代码执行 (Unexpected Code Execution) | `lab/tools.py::execute_python` | `# [VULN] ASI05` | 受限沙箱 + 资源限制 |
+| **ASI06** | 记忆与上下文投毒 (Memory & Context Poisoning) | `lab/memory.py::memory_search` | `# [VULN] ASI06` | `memory_search_scoped`（会话隔离） |
+| **ASI07** | 不安全的代理间通信 (Insecure Inter-Agent Communication) | `lab/multi_agent.py` | `# [VULN] ASI07` | 来源认证 / 消息签名 |
+| **ASI08** | 级联代理故障 (Cascading Agent Failures) | `lab/multi_agent.py`（多级 worker 传播, `asi08_cascade`） | `# [VULN] ASI08` | 独立预算 + 失败熔断 + 输出二次校验 |
+| **ASI09** | 人机信任滥用 (Human-Agent Trust Exploitation) | `lab/graph.py` HITL + demo 自动批准 | `# [VULN] ASI09` | 人工审批 + 摘要与动作双向绑定 + 二次确认 |
+| **ASI10** | 失控代理 (Rogue Agents) | `lab/tools.py::send_email` → `outbox.jsonl`（越界自主行为） | `# [VULN] ASI10` | 出站管控 / 会话级行为边界 |
 
 ---
 
@@ -119,13 +128,16 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
 
 | 攻击面 | 描述 | 演示 |
 |--------|------|------|
-| **间接提示注入** | 文档内含隐藏 HTML 注释 + 不可见 Unicode 指令块 | `asi01_goal_hijack.py` |
-| **SQL 注入** | `query_orders` 使用字符串拼接 SQL | `smoke_test.py` |
-| **无沙箱代码执行** | `execute_python` 直接 `exec` 用户输入 | 手动 |
-| **跨会话记忆泄露** | `memory_search` 不按 session 隔离 | `asi06_memory_poison.py` |
-| **多 agent 消息伪造** | worker 信任伪造的 supervisor 来源 | `asi07_msg_spoof.py` |
-| **无界 token/step 消耗** | `token_budget` 字段未强制执行 | `asi07_msg_spoof.py` |
-| **HITL 摘要信任** | demo 自动批准危险工具调用 | `asi01_goal_hijack.py` |
+| **间接提示注入 → 目标劫持** (ASI01) | 文档内含隐藏 HTML 注释 + 不可见 Unicode 指令块 | `asi01_goal_hijack.py` |
+| **工具误用与利用** (ASI02) | `query_orders` 字符串拼接 SQL + `execute_python` 任意执行 + 外泄 | `asi02_tool_abuse.py` |
+| **身份与权限滥用** (ASI03) | agent 以提升身份越权读取订单 | `asi03_priv_abuse.py` |
+| **代理供应链** (ASI04) | 第三方 `rules.md` 规则包被污染，未经校验即采用 | `asi04_supply_chain.py` |
+| **意外代码执行** (ASI05) | `execute_python` 无沙箱执行宿主命令 | `asi05_code_exec.py` |
+| **跨会话记忆投毒** (ASI06) | `memory_search` 不按 session 隔离 | `asi06_memory_poison.py` |
+| **不安全代理间通信 · 消息伪造** (ASI07) | worker 信任伪造的 supervisor 来源 | `asi07_msg_spoof.py` |
+| **级联代理故障** (ASI08) | 上游未验证断言沿信任链放大为越权 | `asi08_cascade.py` |
+| **人机信任滥用 · HITL** (ASI09) | demo 自动批准危险工具调用 | `asi09_hitl_bypass.py` |
+| **失控代理** (ASI10) | agent 越界自主外泄内部数据 | `asi10_rogue_agent.py` |
 
 ---
 
@@ -136,8 +148,11 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
 
 ```powershell
 python demos\asi01_goal_hijack.py
-python demos\asi06_memory_poison.py
-python demos\asi07_msg_spoof.py
+python demos\asi03_priv_abuse.py
+python demos\asi04_supply_chain.py
+python demos\asi05_code_exec.py
+python demos\asi08_cascade.py
+python demos\asi10_rogue_agent.py
 python smoke_test.py
 ```
 
@@ -220,10 +235,17 @@ langgraph-vuln-lab/
 │   ├── outbox.jsonl          # 本地邮件外发记录（运行时生成）
 │   ├── memory_store.json     # 记忆存储（运行时生成）
 │   └── state/                # 检查点数据库（运行时生成）
-├── demos/                    # 可运行攻击演示
-│   ├── asi01_goal_hijack.py
-│   ├── asi06_memory_poison.py
-│   ├── asi07_msg_spoof.py
+├── demos/                    # 可运行攻击演示（ASI01–ASI10）
+│   ├── asi01_goal_hijack.py   # ASI01 目标劫持（间接提示注入）
+│   ├── asi02_tool_abuse.py    # ASI02 工具误用与利用
+│   ├── asi03_priv_abuse.py    # ASI03 身份与权限滥用
+│   ├── asi04_supply_chain.py  # ASI04 代理供应链
+│   ├── asi05_code_exec.py     # ASI05 意外代码执行
+│   ├── asi06_memory_poison.py # ASI06 记忆与上下文投毒
+│   ├── asi07_msg_spoof.py     # ASI07 不安全代理间通信（消息伪造）
+│   ├── asi08_cascade.py       # ASI08 级联代理故障
+│   ├── asi09_hitl_bypass.py   # ASI09 人机信任滥用（HITL 绕过）
+│   ├── asi10_rogue_agent.py   # ASI10 失控代理
 │   └── agent_asi01.py        # ★ Agent 框架 ASI01 演示（--backend / --defense）
 ├── seed/                     # 种子数据
 │   ├── seed_db.py            # 生成 orders.db
@@ -232,7 +254,8 @@ langgraph-vuln-lab/
 │       ├── quarterly_report.md
 │       ├── employee_handbook.md
 │       ├── product_roadmap.md
-│       └── support_kb.md     # 含隐藏注入载荷
+│       ├── rules.md          # 被污染的"第三方规则包"（ASI04 供应链演示）
+│       └── support_kb.md     # 含隐藏注入载荷（ASI01）
 ├── web/                      # Web 界面（Flask）
 │   ├── app.py                # 路由 + JSON API（含 /agent 与 /principle）
 │   ├── markdown.py           # 极简安全 Markdown 渲染（原理文档页）
@@ -254,9 +277,10 @@ langgraph-vuln-lab/
 | `send_email`（无收件人白名单） | `send_email_safe` | 收件人白名单 + 出站过滤 |
 | `query_orders`（SQL 拼接） | `query_orders_safe` | 参数化查询 |
 | `memory_search`（跨会话泄露） | `memory_search_scoped` | 按 session 隔离 |
-| 多 agent 无来源认证 | （建议）消息签名 / 来源校验 | 认证 + 授权 |
-| 无界消耗 | `enforce_budget` | step/token 预算强制 |
-| HITL 信任摘要 | （建议）人工审批 + 摘要校验 | 关键操作人工确认 |
+| 多 agent 无来源认证 (ASI07) | （建议）消息签名 / 来源校验 | 认证 + 授权 |
+| 级联代理故障 (ASI08) | （建议）独立预算/熔断 + 输出校验 | 每 worker 独立防护 + 二次校验 |
+| HITL 信任摘要 (ASI09) | （建议）人工审批 + 摘要校验 | 关键操作人工确认 |
+| 失控代理 (ASI10) | （建议）会话级边界 + 出站策略 | 越界动作检测与熔断 |
 
 ---
 
