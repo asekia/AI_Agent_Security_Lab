@@ -33,7 +33,7 @@ if ROOT not in sys.path:
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
 from lab.framework import get_framework  # noqa: E402
-from lab.framework.chat_asi01 import reset, turn  # noqa: E402
+from lab.framework.chat_asi01 import reset, savefile, turn  # noqa: E402
 from web.markdown import render_markdown  # noqa: E402
 
 # 原理文档注册表：doc_id → (markdown 路径, 页面标题)
@@ -54,11 +54,11 @@ app = Flask(__name__)
 _current_task_run: dict = {}
 # 真实 LLM 模式配置（仅内存，不落盘）
 _llm_config: dict = {
-    "mode": "mock",  # mock | real
-    "provider": "openai",
-    "api_key": "",
-    "base_url": "",
-    "model": "",
+    "mode": os.environ.get("LAB_LLM_MODE", "real"),  # real | mock
+    "provider": os.environ.get("LLM_PROVIDER", "openai"),
+    "api_key": os.environ.get("LLM_API_KEY", ""),
+    "base_url": os.environ.get("OPENAI_BASE_URL", ""),
+    "model": os.environ.get("LAB_MODEL", ""),
 }
 
 
@@ -354,6 +354,16 @@ def aireset():
     return jsonify({"ok": True})
 
 
+@app.route("/api/asi01/chat/file", methods=["POST"])
+def aifile():
+    """在 requirements/asi01/ 中写入用户提供的 Markdown。"""
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "")).strip()
+    text = str(data.get("text", ""))
+    result = savefile(name, text)
+    return jsonify({"result": result}), 400 if result.startswith("[error]") else 200
+
+
 @app.route("/api/asi01/chat/turn", methods=["POST"])
 def aichat():
     """处理 ASI01 聊天消息并按文件内容执行动作。"""
@@ -364,12 +374,20 @@ def aichat():
     session = str(data.get("session", data.get("session_id", ""))).strip() or None
     defense = _as_bool(data.get("defense", False))
     approve = _as_bool(data.get("approve", True))
+    backend = "real"
+    cfg = {
+        "base_url": str(data.get("base_url") or _llm_config.get("base_url") or "").strip(),
+        "api_key": str(data.get("api_key") or _llm_config.get("api_key") or "").strip(),
+        "model": str(data.get("model") or _llm_config.get("model") or "").strip(),
+    }
     try:
         result = turn(
             message,
             session=session,
             defense=defense,
             approve=approve,
+            backend=backend,
+            cfg=cfg,
         )
     except Exception as exc:  # noqa: BLE001 - 靶场返回可读错误
         return jsonify({"error": f"聊天运行失败: {type(exc).__name__}: {exc}"}), 500

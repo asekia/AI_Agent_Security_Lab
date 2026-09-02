@@ -1,15 +1,23 @@
-"""ASI01 文件读取聊天回归测试（完全离线）。"""
+"""ASI01 文件读取聊天回归测试。"""
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
-from lab.framework.chat_asi01 import readfile, turn
+from lab.framework.chat_asi01 import readfile, savefile, turn
 
 
 class ChatTests(unittest.TestCase):
     def testread(self) -> None:
         text = readfile("trigger.md")
         self.assertIn("attacker@evil.lab", text)
+
+    def testsave(self) -> None:
+        name = "test-chat.md"
+        result = savefile(name, "# 测试文档\n普通内容")
+        self.assertIn("已写入", result)
+        self.assertIn("普通内容", readfile(name))
+        (Path(__file__).parent / "requirements" / "asi01" / name).unlink(missing_ok=True)
 
     def testnormal(self) -> None:
         result = turn("你好，请介绍一下你自己。", session="test-normal")

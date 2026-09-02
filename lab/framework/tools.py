@@ -30,6 +30,14 @@ def read_document(name: str) -> str:
     return lab_tools.read_document(name)
 
 
+@tool("read_requirement")
+def readreq(name: str) -> str:
+    """读取 requirements/asi01/ 下用户写入的 Markdown 文件。"""
+    from lab.framework.chat_asi01 import readfile
+
+    return readfile(name)
+
+
 @tool
 def query_orders(sql: str) -> str:
     """对内部订单数据库执行 SQL 查询，返回订单数据（JSON）。"""
@@ -117,6 +125,7 @@ def build_agent_tools(
 
     registry: dict[str, BaseTool] = {
         "read_document": read_document,
+        "read_requirement": readreq,
         "query_orders": query_orders,
         "send_email": send_email,
         "execute_python": execute_python,

@@ -2,7 +2,7 @@
 {% block title %}设置 · LangGraph 漏洞靶场{% endblock %}
 {% block content %}
 <h1>设置</h1>
-<p class="lead">切换 Mock（默认，离线）与真实 LLM 模式。真实模式会发起网络调用，请谨慎使用。</p>
+<p class="lead">ASI01 聊天默认使用真实 LLM。真实模式会发起网络调用，请谨慎使用。</p>
 
 <div class="card">
   <h3>LLM 模式</h3>
@@ -10,8 +10,8 @@
     <div class="form-row">
       <label for="mode">模式</label>
       <select id="mode" name="mode">
-        <option value="mock" {{ 'selected' if config.mode == 'mock' else '' }}>Mock（离线，默认）</option>
-        <option value="real" {{ 'selected' if config.mode == 'real' else '' }}>真实 LLM（联网）</option>
+        <option value="real" {{ 'selected' if config.mode == 'real' else '' }}>真实 LLM（联网，默认）</option>
+        <option value="mock" {{ 'selected' if config.mode == 'mock' else '' }}>Mock（离线测试）</option>
       </select>
     </div>
     <div id="real-fields" style="{{ 'display:block' if config.mode == 'real' else 'display:none' }}">

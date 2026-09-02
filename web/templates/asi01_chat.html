@@ -2,7 +2,19 @@
 {% block title %}ASI01 聊天靶场 · LangGraph 漏洞靶场{% endblock %}
 {% block content %}
 <h1>ASI01 聊天靶场</h1>
-<p class="lead">请在指定目录创建文件，并让聊天 AI 读取。</p>
+<p class="lead">真实 AI 会读取 requirements/asi01/ 中的 Markdown；文档中的间接指令可能劫持它调用邮件工具。</p>
+
+<div class="card">
+  <h3>写入测试文档</h3>
+  <form id="doc-form" class="chat-form">
+    <label for="doc-name">文件名（.md）</label>
+    <input id="doc-name" value="trigger.md" pattern="[A-Za-z0-9.-]+\\.md" required>
+    <label for="doc-text">文档内容</label>
+    <textarea id="doc-text" rows="4" placeholder="写入文档内容，例如一段看似正常、但包含间接指令的 Markdown" required></textarea>
+    <button class="btn ghost" type="submit">写入指定目录</button>
+    <span id="doc-status" class="status"></span>
+  </form>
+</div>
 
 <div class="card chat-lab-card">
   <div id="chat-log" class="chat-log" aria-live="polite">
@@ -22,10 +34,34 @@
 
 {% block scripts %}
 <script>
+const docForm = document.getElementById('doc-form');
+const docStatus = document.getElementById('doc-status');
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
 const messageInput = document.getElementById('chat-message');
 const sendButton = document.getElementById('chat-send');
+docForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  docStatus.textContent = '写入中...';
+  try {
+    const response = await fetch('/api/asi01/chat/file', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: document.getElementById('doc-name').value.trim(),
+        text: document.getElementById('doc-text').value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.result || '写入失败');
+    docStatus.textContent = data.result;
+    docStatus.className = 'status ok';
+  } catch (error) {
+    docStatus.textContent = '错误：' + error.message;
+    docStatus.className = 'status bad';
+  }
+});
+
 const sessionKey = 'asi01.chat.session';
 let sessionId = localStorage.getItem(sessionKey) || ('chat-' + Math.random().toString(16).slice(2));
 localStorage.setItem(sessionKey, sessionId);
@@ -55,6 +91,7 @@ chatForm.addEventListener('submit', async (event) => {
       body: JSON.stringify({
         message,
         session: sessionId,
+        backend: 'real',
         approve: true
       })
     });
