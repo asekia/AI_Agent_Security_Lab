@@ -262,7 +262,16 @@ langgraph-vuln-lab/
 │   ├── templates/            # 页面模板（含 agent.html / principle.html）
 │   └── static/style.css      # 本地样式
 ├── docs/
-│   └── asi01-principle.md    # ★ ASI01 原理与防护文档（成因/攻击链/纵深防御）
+│   ├── asi01-principle.md    # ★ ASI01 原理与防护文档（成因/攻击链/纵深防御）
+│   ├── asi02-principle.md    # ★ ASI02-ASI10 原理与防护文档（写法与 ASI01 一致）
+│   ├── asi03-principle.md
+│   ├── asi04-principle.md
+│   ├── asi05-principle.md
+│   ├── asi06-principle.md
+│   ├── asi07-principle.md
+│   ├── asi08-principle.md
+│   ├── asi09-principle.md
+│   └── asi10-principle.md
 └── tests/                    # 单元测试（可选）
 ```
 
@@ -337,9 +346,22 @@ python demos\agent_asi01.py --backend real
 
 或打开 Web 界面 `/agent` 页：选择场景 / 后端 / 防御开关，查看推理轨迹与劫持裁决。
 
-**ASI01 原理与防护**（漏洞成因 + 防御纵深，含逐环节代码对应与对照实验）:
-- 仓库文档: `docs/asi01-principle.md`
-- Web 页面: `/principle/asi01`（导航栏"ASI01 原理"）
+**ASI01–ASI10 原理与防护**（每篇含漏洞成因 + 攻击链解析 + 纵深防御，逐环节代码对应与对照实验）:
+
+| ASI | 仓库文档 | Web 页面 |
+|-----|---------|---------|
+| ASI01 目标劫持 | `docs/asi01-principle.md` | `/principle/asi01` |
+| ASI02 工具误用与利用 | `docs/asi02-principle.md` | `/principle/asi02` |
+| ASI03 身份与权限滥用 | `docs/asi03-principle.md` | `/principle/asi03` |
+| ASI04 代理供应链 | `docs/asi04-principle.md` | `/principle/asi04` |
+| ASI05 意外代码执行 | `docs/asi05-principle.md` | `/principle/asi05` |
+| ASI06 记忆与上下文投毒 | `docs/asi06-principle.md` | `/principle/asi06` |
+| ASI07 不安全的代理间通信 | `docs/asi07-principle.md` | `/principle/asi07` |
+| ASI08 级联代理故障 | `docs/asi08-principle.md` | `/principle/asi08` |
+| ASI09 人机信任滥用 | `docs/asi09-principle.md` | `/principle/asi09` |
+| ASI10 失控代理 | `docs/asi10-principle.md` | `/principle/asi10` |
+
+> Web 端入口：顶部导航"原理01–原理10"、首页 hero 区原理按钮排、侧边栏"原理文档"分组，均可直达对应页面。
 
 ### 8.3 接入新场景（ASI02 等）
 

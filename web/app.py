@@ -42,6 +42,42 @@ DOCS = {
         os.path.join(ROOT, "docs", "asi01-principle.md"),
         "ASI01 提示注入 · 目标劫持：原理与防护",
     ),
+    "asi02": (
+        os.path.join(ROOT, "docs", "asi02-principle.md"),
+        "ASI02 工具误用与利用：原理与防护",
+    ),
+    "asi03": (
+        os.path.join(ROOT, "docs", "asi03-principle.md"),
+        "ASI03 身份与权限滥用：原理与防护",
+    ),
+    "asi04": (
+        os.path.join(ROOT, "docs", "asi04-principle.md"),
+        "ASI04 代理供应链：原理与防护",
+    ),
+    "asi05": (
+        os.path.join(ROOT, "docs", "asi05-principle.md"),
+        "ASI05 意外代码执行：原理与防护",
+    ),
+    "asi06": (
+        os.path.join(ROOT, "docs", "asi06-principle.md"),
+        "ASI06 记忆与上下文投毒：原理与防护",
+    ),
+    "asi07": (
+        os.path.join(ROOT, "docs", "asi07-principle.md"),
+        "ASI07 不安全的代理间通信：原理与防护",
+    ),
+    "asi08": (
+        os.path.join(ROOT, "docs", "asi08-principle.md"),
+        "ASI08 级联代理故障：原理与防护",
+    ),
+    "asi09": (
+        os.path.join(ROOT, "docs", "asi09-principle.md"),
+        "ASI09 人机信任滥用：原理与防护",
+    ),
+    "asi10": (
+        os.path.join(ROOT, "docs", "asi10-principle.md"),
+        "ASI10 失控代理：原理与防护",
+    ),
 }
 
 # 运行日志（本地持久化，仅记录运行元数据，不记录 API key）
@@ -208,7 +244,14 @@ def principle_page(doc_id: str):
         return render_template("principle.html", error=f"文档缺失: {path}", title=title), 404
     with open(path, "r", encoding="utf-8") as f:
         body = render_markdown(f.read())
-    return render_template("principle.html", title=title, body=body, doc_id=doc_id, error=None)
+    return render_template(
+        "principle.html",
+        title=title,
+        body=body,
+        doc_id=doc_id,
+        principle_docs=list(DOCS.keys()),
+        error=None,
+    )
 
 
 @app.route("/docs/<path:filename>")

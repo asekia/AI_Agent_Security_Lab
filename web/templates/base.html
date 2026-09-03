@@ -21,7 +21,16 @@
       </a>
       <div class="nav-right">
         <a class="nav-utility" href="{{ url_for('agent_page') }}">Agent 框架</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi01') }}">原理01</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi02') }}">原理02</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi03') }}">原理03</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi04') }}">原理04</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi05') }}">原理05</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi06') }}">原理06</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi07') }}">原理07</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi08') }}">原理08</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi09') }}">原理09</a>
+        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi10') }}">原理10</a>
         <span class="mode-badge" id="mode-badge">模式: {{ llm_mode if llm_mode is defined else 'mock' }}</span>
       </div>
     </div>
@@ -39,6 +48,18 @@
         <div class="side-group">总览</div>
         <a class="side-link" href="{{ url_for('index') }}"><span class="side-label">仪表盘</span></a>
 
+        <div class="side-group">原理文档</div>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi01') }}"><span class="side-label">ASI01 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi02') }}"><span class="side-label">ASI02 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi03') }}"><span class="side-label">ASI03 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi04') }}"><span class="side-label">ASI04 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi05') }}"><span class="side-label">ASI05 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi06') }}"><span class="side-label">ASI06 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi07') }}"><span class="side-label">ASI07 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi08') }}"><span class="side-label">ASI08 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi09') }}"><span class="side-label">ASI09 原理</span></a>
+        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi10') }}"><span class="side-label">ASI10 原理</span></a>
+
         <div class="side-group">攻击演示</div>
         <a class="side-link" href="{{ url_for('asi_page', demo_id='asi01') }}"><span class="side-label">ASI01 目标劫持</span></a>
         <a class="side-link" href="{{ url_for('asi_page', demo_id='asi02') }}"><span class="side-label">ASI02 工具误用</span></a>
@@ -53,7 +74,6 @@
 
         <div class="side-group">Agent 框架</div>
         <a class="side-link" href="{{ url_for('agent_page') }}"><span class="side-label">Agent 框架</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi01') }}"><span class="side-label">ASI01 原理</span></a>
         <a class="side-link" href="{{ url_for('asichat') }}"><span class="side-label">ASI01 聊天靶场</span></a>
 
         <div class="side-group">工具</div>

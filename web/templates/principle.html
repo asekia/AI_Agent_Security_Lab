@@ -9,7 +9,7 @@
 <div class="principle-header">
   <h1>{{ title }}</h1>
   <p class="meta">
-    原理文档 · 来源: <span class="mono">docs/asi01-principle.md</span>
+    原理文档 · 来源: <span class="mono">docs/{{ doc_id }}-principle.md</span>
     · <a class="btn" href="{{ url_for('docs_file', filename=doc_id + '-principle.md') }}">下载 Markdown</a>
   </p>
 </div>
@@ -17,8 +17,11 @@
   {{ body | safe }}
 </div>
 <p class="muted" style="margin-top:24px;">
-  关联页面: <a href="{{ url_for('agent_page') }}">Agent 框架（运行 ASI01 实验）</a> ·
-  <a href="{{ url_for('asi_page', demo_id='asi01') }}">ASI01 演示</a>
+  关联页面: <a href="{{ url_for('asi_page', demo_id=doc_id) }}">{{ doc_id | upper }} 演示</a>
+  {% if doc_id == 'asi01' %}
+  · <a href="{{ url_for('agent_page') }}">Agent 框架（运行 ASI01 实验）</a>
+  {% endif %}
+  · {% for did in principle_docs %}<a href="{{ url_for('principle_page', doc_id=did) }}">{{ did | upper }}</a>{% if not loop.last %} / {% endif %}{% endfor %}
 </p>
 {% endif %}
 {% endblock %}
