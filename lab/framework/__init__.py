@@ -1,6 +1,6 @@
 """lab/framework — LangChain/LangGraph Agent 框架（真实 AI 模块接入层）。
 
-解决旧靶场"离线、脱节、无法接入真实 AI"的问题：
+提供统一的 LangChain/LangGraph Agent 接入层：
 
 - llm.py      基于 langchain_core BaseChatModel 的两个后端：
                MockChatModel（内容感知、确定性、离线）与

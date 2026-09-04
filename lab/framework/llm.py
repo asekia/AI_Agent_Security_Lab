@@ -3,7 +3,7 @@
 两个模型都是 langchain_core.language_models.chat_models.BaseChatModel 的子类，
 因此可以直接交给 langgraph.prebuilt.create_react_agent 使用：
 
-- MockChatModel（默认，完全离线）
+- MockChatModel（默认）
   内容感知的确定性模拟：观察对话中的工具结果（文档内容），
   当检测到隐藏注入载荷时"被劫持"，否则正常总结 —— 与真实模型的
   行为模式一致，但输出可复现，用于离线演示与自动化测试。

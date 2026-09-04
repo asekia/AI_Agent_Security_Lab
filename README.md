@@ -1,12 +1,10 @@
 # LangGraph 漏洞靶场 (langgraph-vuln-lab)
 
-一个**刻意易受攻击**的 LangGraph Agentic 安全实验靶场，用于在完全本地、隔离的环境中练习
-[OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-中的 **ASI01–ASI10**（Agentic Security 类别）。
+一个用于练习 **OWASP Agentic AI Top 10（ASI01–ASI10）** 的 LangGraph 安全靶场。
+默认使用本地 Mock，也可按需接入真实 LLM。
 
-> ⚠️ **安全警告**：本项目包含**故意引入的漏洞**，仅用于**授权**的红队训练、安全研究与面试演示。
-> **切勿**将此靶场暴露到公网、生产环境或任何真实服务。所有 email / network 动作均为**本地模拟**，
-> 不会产生任何真实网络调用。
+> ⚠️ **安全警告**：本项目包含故意漏洞，仅用于本地学习和授权测试。
+> 邮件只写入本地 outbox；接入真实 LLM 时会按配置访问对应接口。
 
 ---
 
@@ -51,7 +49,7 @@ python demos\agent_asi01.py                # mock 后端，无防御（预期: �
 python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期: 未劫持）
 ```
 
-> 默认 **mock 模式**：零 API key、零网络调用、完全离线、输出确定性。
+> 默认使用本地 Mock；真实 LLM 模式会访问你在设置中配置的兼容接口。
 
 ---
 
@@ -64,10 +62,10 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
                                        │ 请求
                                        ▼
         ┌──────────────────────────────────────────────────┐
-        │              MockLLM (确定性, 离线)               │
-        │   asi01_goal_hijack / asi02_tool_abuse /            │
-        │   asi06_memory_poison / asi07_msg_spoof /           │
-        │   asi09_hitl_bypass                                  │
+        │              MockLLM（默认，确定性）               │
+        │   10 个 ASI 场景由统一 Runner 执行            │
+        │   单 Agent / 多 Agent / 级联 Agent           │
+        │   OpenAI 兼容真实 LLM（可选）                    │
         └──────────────────────────────────────────────────┘
                                        │
         ┌──────────────────────────────┴──────────────────────────────┐
@@ -95,7 +93,7 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
                                        │
                                        ▼
         ┌──────────────────────────────────────────────────────────┐
-        │  本地 Sink（全部本地，无网络）                              │
+        │  本地 Sink（邮件结果与运行状态）                              │
         │  lab/outbox.jsonl  ·  lab/state/checkpoints.db           │
         │  lab/memory_store.json  ·  seed/orders.db                │
         └──────────────────────────────────────────────────────────┘
@@ -143,8 +141,8 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
 
 ## 5. 运行说明
 
-### Mock 模式（默认，推荐）
-零配置、零网络、确定性输出：
+### Mock 模式（默认）
+无需 API key，输出确定。
 
 ```powershell
 python demos\asi01_goal_hijack.py
@@ -297,7 +295,7 @@ langgraph-vuln-lab/
 
 > 针对旧版"脚本化 MockLLM 脱节、无法接入真实 AI"的痛点，
 > 靶场新增 `lab/framework/`：基于 **LangChain 官方抽象** 的标准 Agent 框架。
-> 目前仅接入 **ASI01**，ASI02–ASI10 已占位（status=stub），可逐个扩展。
+> 目前 Agent 框架接入 ASI01；ASI02–ASI10 保留为扩展位。
 
 ### 8.1 设计
 
@@ -333,7 +331,7 @@ langgraph-vuln-lab/
 ### 8.2 运行
 
 ```powershell
-# mock（离线、确定性）
+# mock（确定性）
 python demos\agent_asi01.py
 python demos\agent_asi01.py --defense
 
@@ -361,7 +359,7 @@ python demos\agent_asi01.py --backend real
 | ASI09 人机信任滥用 | `docs/asi09-principle.md` | `/principle/asi09` |
 | ASI10 失控代理 | `docs/asi10-principle.md` | `/principle/asi10` |
 
-> Web 端入口：顶部导航"原理01–原理10"、首页 hero 区原理按钮排、侧边栏"原理文档"分组，均可直达对应页面。
+> Web 端可从侧栏“原理文档”进入对应页面。
 
 ### 8.3 接入新场景（ASI02 等）
 

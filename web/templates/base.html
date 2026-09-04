@@ -9,8 +9,8 @@
 </head>
 <body>
   <div class="banner">
-    <strong>LOCAL-ONLY SECURITY LAB — no network calls</strong>
-    <span class="banner-sub">LangGraph Agentic Security 靶场 (ASI01-ASI10) · 所有 email / network 动作均为本地模拟 · 请勿暴露到网络</span>
+    <strong>LOCAL SECURITY LAB</strong>
+    <span class="banner-sub">ASI01–ASI10 · 邮件结果仅写入本地 · 真实 LLM 按设置调用</span>
   </div>
 
   <!-- Apple 风格全局导航：44px 纯黑栏 -->
@@ -21,16 +21,6 @@
       </a>
       <div class="nav-right">
         <a class="nav-utility" href="{{ url_for('agent_page') }}">Agent 框架</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi01') }}">原理01</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi02') }}">原理02</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi03') }}">原理03</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi04') }}">原理04</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi05') }}">原理05</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi06') }}">原理06</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi07') }}">原理07</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi08') }}">原理08</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi09') }}">原理09</a>
-        <a class="nav-utility" href="{{ url_for('principle_page', doc_id='asi10') }}">原理10</a>
         <span class="mode-badge" id="mode-badge">模式: {{ llm_mode if llm_mode is defined else 'mock' }}</span>
       </div>
     </div>

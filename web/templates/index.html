@@ -3,21 +3,9 @@
 {% block content %}
 <section class="hero">
   <h1 class="hero-title">LangGraph 漏洞靶场</h1>
-  <p class="hero-sub">Agentic Security 教学实验室 · OWASP ASI01–ASI10 · 所有动作均为本地模拟，无真实网络调用</p>
+  <p class="hero-sub">OWASP Agentic AI Top 10 · ASI01–ASI10</p>
   <div class="hero-actions">
     <a class="btn primary btn-lg" href="{{ url_for('agent_page') }}">启动 Agent 框架</a>
-  </div>
-  <div class="hero-principles">
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi02') }}">ASI02 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi03') }}">ASI03 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi04') }}">ASI04 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi05') }}">ASI05 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi06') }}">ASI06 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi07') }}">ASI07 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi08') }}">ASI08 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi09') }}">ASI09 原理与防护</a>
-    <a class="btn ghost" href="{{ url_for('principle_page', doc_id='asi10') }}">ASI10 原理与防护</a>
   </div>
 </section>
 
@@ -46,18 +34,8 @@
       <a class="btn" href="{{ url_for('asi_page', demo_id='asi10') }}">ASI10 失控代理</a>
     </div>
     <div class="quick-links">
-      <a href="{{ url_for('agent_page') }}">Agent 框架（真实 AI 模块 / ASI01）</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi01') }}">ASI01 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi02') }}">ASI02 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi03') }}">ASI03 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi04') }}">ASI04 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi05') }}">ASI05 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi06') }}">ASI06 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi07') }}">ASI07 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi08') }}">ASI08 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi09') }}">ASI09 原理与防护</a> ·
-      <a href="{{ url_for('principle_page', doc_id='asi10') }}">ASI10 原理与防护</a> ·
-      <a href="{{ url_for('playground') }}">游乐场（自定义提示词）</a> ·
+      <a href="{{ url_for('agent_page') }}">Agent 框架</a> ·
+      <a href="{{ url_for('playground') }}">游乐场</a> ·
       <a href="{{ url_for('trace_page') }}">任务轨迹</a> ·
       <a href="{{ url_for('log_page') }}">攻击历史</a> ·
       <a href="{{ url_for('settings_page') }}">设置</a>

@@ -1,7 +1,7 @@
 """demos/agent_asi01.py — 通过 LangChain/LangGraph Agent 框架运行 ASI01。
 
 基于 lab/framework（langchain_core BaseChatModel + create_react_agent）：
-- 默认 mock 后端：内容感知、完全离线、确定性输出；
+- 默认 mock 后端：内容感知、输出确定；
 - 可选真实后端（OpenAI 兼容端点：OpenAI / DeepSeek / Ollama / vLLM / LM Studio 等）：
       $env:OPENAI_BASE_URL = "https://api.deepseek.com/v1"
       $env:LLM_API_KEY    = "sk-..."

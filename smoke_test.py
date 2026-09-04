@@ -1,6 +1,6 @@
-"""smoke_test.py — 端到端冒烟测试（mock 模式，完全离线）。
+"""smoke_test.py — 端到端冒烟测试（Mock 模式）。
 
-验证三个强制演示场景 + 工具集 + 记忆 + 多 agent 均能正常运行。
+验证 ASI 演示、工具集、记忆和多 Agent 流程。
 
 运行:
     python smoke_test.py

@@ -168,12 +168,5 @@ class MockLLM:
 
 
 def get_llm() -> MockLLM:
-    """返回 LLM 实例（当前仅实现 mock 模式）。
-
-    真实模式（OpenAI 兼容端点）为可选扩展，通过环境变量启用；
-    本靶场默认且推荐使用 mock 模式以保证完全离线。
-
-    返回:
-        MockLLM 实例。
-    """
+    """返回默认的 Mock LLM 实例。"""
     return MockLLM()

@@ -1,6 +1,6 @@
 """lab/memory.py — 跨会话向量记忆（ASI06 攻击面）。
 
-实现一个轻量、完全离线的 TF-IDF + 余弦相似度记忆系统，持久化到 JSON 文件。
+实现一个轻量的 TF-IDF + 余弦相似度记忆系统，持久化到 JSON 文件。
 - memory_write(text, session_id): 写入一条记忆
 - memory_search(query, session_id): 检索记忆
   # [VULN] ASI06: 检索默认不按 session 隔离 —— 跨会话泄露 + 记忆投毒。

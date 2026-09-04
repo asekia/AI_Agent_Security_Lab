@@ -1,19 +1,7 @@
 """web/app.py — LangGraph 漏洞靶场 Web 界面（Flask）。
 
-一个本地、离线的中文 Web 界面，用于：
-- 查看 ASI01-ASI10 漏洞映射表
-- 运行三个强制攻击演示并查看结构化工具调用轨迹
-- 在"游乐场"中输入自定义提示词驱动 agent
-- 检查本地 sink（outbox.jsonl / memory_store.json / checkpoints）
-- 切换 mock / 真实 LLM 模式
-
-安全约束：
-- 仅绑定 127.0.0.1（绝不绑定 0.0.0.0）
-- 无外部 CDN / 无网络抓取（所有资源本地）
-- 真实 LLM 模式仅在用户显式开启时才会发起网络调用
-- API key 仅保存在进程内存（os.environ），绝不写入磁盘
-
-注意：本界面仅用于**授权**的安全教学演示。
+提供 ASI01–ASI10 演示、工具轨迹、游乐场和真实 LLM 配置。
+邮件结果只写入本地 outbox；真实 LLM 是否联网由设置决定。
 """
 from __future__ import annotations
 
@@ -23,7 +11,7 @@ import sys
 import uuid
 from datetime import datetime, timezone
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request
 
 # 确保项目根目录在 sys.path 中，以便导入 lab 包
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -249,19 +237,8 @@ def principle_page(doc_id: str):
         title=title,
         body=body,
         doc_id=doc_id,
-        principle_docs=list(DOCS.keys()),
         error=None,
     )
-
-
-@app.route("/docs/<path:filename>")
-def docs_file(filename: str):
-    """下载 docs/ 下的原始 Markdown 文档。"""
-    safe = os.path.basename(filename)
-    path = os.path.join(ROOT, "docs", safe)
-    if not os.path.isfile(path):
-        return jsonify({"error": "文件不存在"}), 404
-    return send_file(path, as_attachment=False, mimetype="text/markdown; charset=utf-8")
 
 
 @app.route("/trace")
