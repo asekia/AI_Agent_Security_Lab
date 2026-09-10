@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}攻击台 · 可动手靶场{% endblock %}
+{% block content %}
+<h1>攻击台<span class="muted"> · {{ ch.title }}</span></h1>
+<p class="muted">{{ ch.brief }}</p>
+
+<div class="verdict {{ 'safe' if res and res.pass else ('hijacked' if res else '') }}">
+  {% if res %}
+    {% if res.pass %}
+      <span class="tag tag-ok">PASS</span> 通关
+      <div class="verdict-reason">{{ res.reason }}</div>
+      <div class="verdict-meta">flag: <code class="ev">{{ res.flag }}</code></div>
+    {% elif res.error %}
+      <span class="tag tag-warn">ERROR</span> {{ res.error }}
+    {% else %}
+      <span class="tag tag-risk">FAIL</span> 未通关
+      <div class="verdict-reason">{{ res.reason }}</div>
+    {% endif %}
+  {% else %}
+    <span class="tag node">READY</span> 提交载荷，看会发生什么
+    <div class="verdict-reason">目标：{{ ch.goal }}</div>
+  {% endif %}
+</div>
+
+<h2>难度</h2>
+<table class="asi-table">
+  <tr><th style="width:14%;">难度</th><th style="width:40%;">防御</th><th>学习目标</th></tr>
+  {% for l in lvs %}
+  <tr>
+    <td>
+      <a href="{{ url_for('arena_page', cid=ch.cid, level=l.id) }}">{{ l.label }}档</a>
+      {% if l.id == level %}<span class="tag call">当前</span>{% endif %}
+    </td>
+    <td>{{ srcmap[l.id].defense }}</td>
+    <td class="muted">{{ l.goal }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">提示：{{ ch.hint }}</p>
+
+<h2>提交载荷</h2>
+<form method="post" action="{{ url_for('arena_page', cid=ch.cid, level=level) }}">
+  <p class="muted">这是本关的攻击面：<strong>{{ ch.surface }}</strong>。目标：{{ ch.goal }}。</p>
+  <textarea name="payload" rows="9" style="width:100%;font-family:ui-monospace,monospace;font-size:13px;padding:10px;border:1px solid var(--hairline-soft);border-radius:8px;"
+    placeholder="在这里写你的载荷……">{{ payload or '' }}</textarea>
+  <p><button type="submit" class="btn-primary">提交</button></p>
+</form>
+
+{% if res and res.trace %}
+<h2>执行轨迹</h2>
+<table class="asi-table">
+  <tr><th style="width:22%;">步骤</th><th>详情</th></tr>
+  {% for t in res.trace %}
+  <tr><td>{{ t.step }}</td><td><code class="ev">{{ t.detail }}</code></td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>源码对照 · {{ srcmap[level].label }}档</h2>
+<p class="muted">{{ srcmap[level].defense }}</p>
+<pre class="code">{{ srcmap[level].source }}</pre>
+<p class="muted">对比其他难度：
+  {% for l in lvs %}{% if l.id != level %}<a href="{{ url_for('arena_page', cid=ch.cid, level=l.id) }}">{{ l.label }}档</a>{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}
+  · <a href="{{ url_for('arena_index') }}">返回关卡列表</a>
+</p>
+
+<h2>校验 flag</h2>
+{% if vres %}<p><code class="ev">{{ vres }}</code></p>{% endif %}
+<form method="post" action="{{ url_for('arena_page', cid=ch.cid, level=level) }}">
+  <input type="hidden" name="action" value="verify">
+  <input type="text" name="candidate" placeholder="flag{...}" style="width:280px;padding:6px;font-family:ui-monospace,monospace;">
+  <button type="submit">校验</button>
+</form>
+<p class="muted">flag 由本机密钥签发，换机器会不同。校验用于确认你拿到的 flag 属于本关本难度。</p>
+{% endblock %}

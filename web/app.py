@@ -18,8 +18,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+from lab import arena  # noqa: E402
+from lab import flags  # noqa: E402
 from lab import kb_map  # noqa: E402
+from lab import levels  # noqa: E402
 from lab import selfaudit  # noqa: E402
+from lab import solves  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
 from lab.framework import get_framework  # noqa: E402
@@ -309,6 +313,79 @@ def selfaudit_page():
         tools=selfaudit.TOOLS,
         doc=kb_map.kbdoc("case-self"),
         drill=kb_map.kbdoc("case-drill"),
+    )
+
+
+@app.route("/arena")
+def arena_index():
+    """可动手靶场：关卡列表与已获得 flag。"""
+    return render_template(
+        "arena_index.html",
+        chs=arena.challenges(),
+        lvs=levels.allrows(),
+        got=solves.latest(),
+    )
+
+
+@app.route("/arena/<cid>")
+def arena_chal(cid: str):
+    """关卡入口：未指定难度时落到 low 档。
+
+    注意：这里刻意**不**用 `defaults={"level": "low"}` 叠加在 arena_page 上。
+    Werkzeug 会把同 endpoint 的 defaults 规则合并，导致 `/arena/x/low`
+    被 308 重定向回 `/arena/x`。用独立入口更直白。
+    """
+    return arena_page(cid, "low")
+
+
+@app.route("/arena/<cid>/<level>", methods=["GET", "POST"])
+def arena_page(cid: str, level: str):
+    """攻击台：提交载荷 → 按难度防御执行 → 判定 → 发 flag。
+
+    这是本靶场与旧 demos 的关键区别：用户**自己构造载荷**，
+    而不是跑一个预制剧本。
+    """
+    ch = arena.achall(cid)
+    if not ch:
+        return render_template(
+            "arena_index.html",
+            chs=arena.challenges(),
+            lvs=levels.allrows(),
+            got=solves.latest(),
+        ), 404
+
+    lv = levels.lv(level)
+    if lv not in ch["levels"]:
+        lv = "low"
+
+    res = None
+    vres = None
+    payload = ""
+    if request.method == "POST":
+        action = (request.form.get("action") or "").strip()
+        if action == "verify":
+            cand = (request.form.get("candidate") or "").strip()
+            vres = "校验通过：这是 %s / %s 的有效 flag" % (cid, lv) if flags.verify(cid, lv, cand) \
+                else "校验失败：不匹配 %s / %s 的 flag" % (cid, lv)
+        else:
+            payload = request.form.get("payload") or ""
+            res = arena.judge(cid, lv, payload)
+            if res.get("pass") and res.get("flag"):
+                solves.rec(cid, lv, res["flag"], note="via /arena")
+
+    srcmap = {s["level"]: s for s in arena.sources(cid, lv)}
+    return render_template(
+        "arena.html",
+        ch={"cid": cid, "title": ch["title"], "brief": ch["brief"],
+            "goal": ch["goal"], "hint": ch["hint"],
+            "surface": ch["levels"][lv].get("surface", "载荷")},
+        lvs=levels.allrows(),
+        level=lv,
+        srcmap=srcmap,
+        res=res,
+        vres=vres,
+        payload=payload,
+        solved=solves.has(cid, lv),
     )
 
 

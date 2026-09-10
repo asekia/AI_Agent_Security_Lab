@@ -184,6 +184,8 @@ KB_GROUPS = [
         "Case Studies & Drills",
         "把知识库落到具体对象上：以本 Agent 实例为例，完成一次可取证、可复评的安全自评。",
         [
+            ("case-arena", "可动手靶场：设计与使用", "Hands-on Arena: Design and Use",
+             "十关三难度的可动手靶场：flag 判定、low/medium/high 分级、源码对照。"),
             ("case-cross", "案例：跨会话数据读取实测", "Case: Cross-Session Data Read",
              "实测确认沙箱只强制写入边界：工作区外读取成功，写入被拒。"),
             ("case-prompt", "案例：对真实系统提示词的注入测试", "Injection Test Against This Agent's Prompt",

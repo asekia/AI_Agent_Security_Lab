@@ -33,6 +33,10 @@ lab/state/
 lab/web/run_log.jsonl
 _task_trace/
 
+# Arena: the flag signing key is a local secret; solve records are per-machine
+lab/.flagkey
+lab/solves.jsonl
+
 # Unidentified local artifact
 /0
 
