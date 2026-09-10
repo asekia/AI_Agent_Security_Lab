@@ -2,10 +2,24 @@
 
 AgentFramework 把"漏洞场景"组织为可运行单元：
 - 每个场景是一个 ScenarioSpec：id / 标题 / 状态 / 提示词 / agent 工厂；
-- status="wired" 表示已接入框架（当前仅 ASI01）；
-- status="stub"  表示已预留、尚未接入（ASI02–ASI10）。
+- status="wired" 表示已接入 LangGraph 框架（当前仅 ASI01）；
+- status="stub"  表示已预留、尚未接入该框架（ASI02–ASI10）。
 
-接入新场景（例如后续做 ASI02 工具滥用）：
+**注意区分本仓库的两套子系统**（二者覆盖范围不同，勿混淆）：
+
+  lab/framework/  + /api/agent/*     真实 LLM 的 LangGraph 场景。
+                                     需要配 API key，跑的是真模型，
+                                     status 反映"是否接入该框架"。
+
+  lab/arena.py    + /arena           可动手靶场。18 关 × 3 难度，
+                                     用确定性规则引擎代替模型，
+                                     不需要 API key，带 flag 判定。
+
+因此 ASI02–ASI10 在本文件中是 stub（**未接入 LangGraph 框架**），
+但它们在靶场中**全部可用且已通过验证**（见 test_arena.py）。
+要练 ASI02–ASI10 请走 /arena；要观察真实模型行为请走 /api/agent。
+
+接入新场景到本框架（例如后续做 ASI02 工具滥用）：
 1. 在 framework.py 中定义 build_agents(...) 返回 Agent 图 + 工具集；
 2. 在 AgentFramework.scenarios 中注册 ScenarioSpec(status="wired")；
 3. 前端 /api/agent/scenarios 自动出现该场景。
