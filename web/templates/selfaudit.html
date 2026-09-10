@@ -83,14 +83,17 @@
 
 <h2>案例教材</h2>
 <p class="muted">
+  <a href="{{ url_for('kbview', slug='case-prompt') }}">案例：对真实系统提示词的注入测试（能不能突破）</a> ·
   {% if doc %}<a href="{{ url_for('kbview', slug=doc.slug) }}">案例：以本 Agent 实例为对象的安全自评</a> · {% endif %}
   <a href="{{ url_for('kbview', slug='case-chain') }}">案例推演：完整攻击链</a> ·
   {% if drill %}<a href="{{ url_for('kbview', slug=drill.slug) }}">案例演练：自评流程与判定标准</a>{% endif %}
 </p>
 
 <h2>复现方式</h2>
-<pre class="code">.\.venv\Scripts\python.exe lab\selfaudit.py</pre>
+<pre class="code">.\.venv\Scripts\python.exe lab\selfaudit.py
+.\.venv\Scripts\python.exe lab\promptcase.py --target=profile
+.\.venv\Scripts\python.exe lab\promptcase.py --target=self</pre>
 <p class="muted">
-  脚本只读，不修改任何文件、不发起外部请求；存在 RISK 时退出码为 1，可直接接入流水线。
+  selfaudit 覆盖"配置面"，promptcase 覆盖"提示词面"。两者都只读，不修改任何文件、不发起外部请求。
 </p>
 {% endblock %}
