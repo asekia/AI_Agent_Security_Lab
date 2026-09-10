@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}LLM 安全知识库 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>LLM 安全知识库</h1>
+<p class="muted">
+  {{ stats[0] }} 个分类 · {{ stats[1] }} 篇文档，覆盖提示注入、编码混淆、越狱、模型与数据层攻击、
+  上下文与记忆、智能体、AI 基础设施与供应链、防御与评估。与 ASI01–ASI10 演示配套使用。
+</p>
+
+{% for g in groups %}
+<h2 id="g-{{ g.id }}">{{ g.title }}<span class="muted"> · {{ g.en }}</span></h2>
+<p class="muted">{{ g.desc }}</p>
+<table class="asi-table">
+  <tr><th style="width:30%;">文档</th><th style="width:22%;">英文名</th><th>说明</th></tr>
+  {% for d in g.docs %}
+  <tr>
+    <td><a href="{{ url_for('kbview', slug=d.slug) }}">{{ d.title }}</a></td>
+    <td>{{ d.en }}</td>
+    <td>{{ d.desc }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endfor %}
+
+<h2>官方参考来源</h2>
+<ul>
+  {% for name, url in sources %}
+  <li><a href="{{ url }}" target="_blank" rel="noopener">{{ name }}</a></li>
+  {% endfor %}
+</ul>
+<p class="muted">
+  外部资料仅用于技术整理与引用，不替代官方文档；编号与名称以官方最新版本为准。
+</p>
+{% endblock %}

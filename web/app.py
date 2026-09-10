@@ -18,6 +18,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+from lab import kb_map  # noqa: E402
+from lab import selfaudit  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
 from lab.framework import get_framework  # noqa: E402
@@ -238,6 +240,75 @@ def principle_page(doc_id: str):
         body=body,
         doc_id=doc_id,
         error=None,
+    )
+
+
+@app.route("/kb")
+def kbindex():
+    """LLM 安全知识库总览：按分类列出全部文档。"""
+    groups = [kb_map.kbgroup(g[0]) for g in kb_map.KB_GROUPS]
+    return render_template(
+        "kb.html",
+        groups=groups,
+        stats=kb_map.kbstats(),
+        sources=kb_map.KB_SOURCES,
+    )
+
+
+@app.route("/kb/g/<gid>")
+def kbgroup(gid: str):
+    """知识库分类页：列出该分类下的全部文档。"""
+    group = kb_map.kbgroup(gid)
+    if not group:
+        return render_template(
+            "kbgroup.html",
+            group={"id": "", "title": "未知分类", "en": "", "desc": f"分类不存在: {gid}", "docs": []},
+            groups=[],
+        ), 404
+    groups = [kb_map.kbgroup(g[0]) for g in kb_map.KB_GROUPS]
+    return render_template("kbgroup.html", group=group, groups=groups)
+
+
+@app.route("/kb/<slug>")
+def kbview(slug: str):
+    """知识库文档页：将 docs/kb/*.md 渲染为 HTML。"""
+    doc = kb_map.kbdoc(slug)
+    if not doc:
+        return render_template(
+            "kbdoc.html",
+            doc={"title": "未知文档", "en": "", "group": "", "group_zh": "", "slug": slug},
+            body=f"<p>文档不存在: {slug}</p>",
+        ), 404
+    path = doc["file"]
+    if not os.path.exists(path):
+        return render_template(
+            "kbdoc.html",
+            doc=doc,
+            body=f"<p>文档缺失: {path}</p>",
+        ), 404
+    with open(path, "r", encoding="utf-8") as f:
+        body = render_markdown(f.read())
+    return render_template("kbdoc.html", doc=doc, body=body)
+
+
+@app.route("/selfaudit")
+def selfaudit_page():
+    """Agent 自评页：以本实例为对象运行只读自评，展示判定与证据。"""
+    rows = selfaudit.audit()
+    order = {"RISK": 0, "WARN": 1, "OK": 2}
+    rows = sorted(rows, key=lambda r: order.get(r["level"], 3))
+    counts = {"RISK": 0, "WARN": 0, "OK": 0}
+    for r in rows:
+        counts[r["level"]] = counts.get(r["level"], 0) + 1
+    return render_template(
+        "selfaudit.html",
+        rows=rows,
+        counts=counts,
+        total=len(rows),
+        declared=selfaudit.DECLARED,
+        tools=selfaudit.TOOLS,
+        doc=kb_map.kbdoc("case-self"),
+        drill=kb_map.kbdoc("case-drill"),
     )
 
 

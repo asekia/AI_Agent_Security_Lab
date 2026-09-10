@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ group.title }} · LLM 安全知识库{% endblock %}
+{% block content %}
+<h1>{{ group.title }}<span class="muted"> · {{ group.en }}</span></h1>
+<p class="muted">{{ group.desc }}</p>
+
+<table class="asi-table">
+  <tr><th style="width:32%;">文档</th><th style="width:22%;">英文名</th><th>说明</th></tr>
+  {% for d in group.docs %}
+  <tr>
+    <td><a href="{{ url_for('kbview', slug=d.slug) }}">{{ d.title }}</a></td>
+    <td>{{ d.en }}</td>
+    <td>{{ d.desc }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h2>其他分类</h2>
+<p class="muted">
+  {% for g in groups %}{% if g.id != group.id %}<a href="{{ url_for('kbgroup', gid=g.id) }}">{{ g.title }}</a>{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}
+</p>
+<p class="muted"><a href="{{ url_for('kbindex') }}">返回知识库总览</a></p>
+{% endblock %}

@@ -403,6 +403,22 @@ h4 { font-size: 14px; font-weight: 600; margin: 14px 0 6px; color: var(--primary
 .tag.thought { background: rgba(255, 149, 0, 0.14); color: var(--thought); }
 .tag.denied { background: rgba(255, 59, 48, 0.12); color: var(--denied); }
 .tag.final { background: rgba(88, 86, 214, 0.12); color: var(--final); }
+.tag.tag-risk { background: rgba(255, 59, 48, 0.12); color: var(--denied); }
+.tag.tag-warn { background: rgba(255, 149, 0, 0.14); color: var(--thought); }
+.tag.tag-ok { background: rgba(52, 199, 89, 0.14); color: var(--result); }
+
+/* ---------- Agent 自评页 ---------- */
+.ev {
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+  color: var(--ink-muted-80);
+  background: var(--surface-pearl);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+pre.code { margin: 8px 0 4px; }
 
 .thought-text { color: var(--thought); }
 .final-text { color: var(--final); }
