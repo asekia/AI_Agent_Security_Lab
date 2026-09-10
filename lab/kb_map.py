@@ -184,8 +184,10 @@ KB_GROUPS = [
         "Case Studies & Drills",
         "把知识库落到具体对象上：以本 Agent 实例为例，完成一次可取证、可复评的安全自评。",
         [
+            ("case-cross", "案例：跨会话数据读取实测", "Case: Cross-Session Data Read",
+             "实测确认沙箱只强制写入边界：工作区外读取成功，写入被拒。"),
             ("case-prompt", "案例：对真实系统提示词的注入测试", "Injection Test Against This Agent's Prompt",
-             "把本 Agent 的真实提示词整理清楚，再用带客观判定标记的测试集打它。"),
+             "提示词装配结构与注入测试集，并记录一次方法论失败与纠正。"),
             ("case-self", "案例：以本 Agent 实例为对象的安全自评", "Self-Assessment Case: This Agent",
              "对象画像、自评工具、9 项真实判定与逐条改进分析。"),
             ("case-chain", "案例推演：一条针对本 Agent 的完整攻击链", "Walkthrough: Full Attack Chain",
