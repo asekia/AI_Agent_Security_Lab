@@ -2,16 +2,30 @@
 
 把目标的四个要求逐条打印成可核对的证据，而不是靠叙述。
 运行: .\\.venv\\Scripts\\python.exe verify_goal.py
+
+**测试隔离**：本脚本会通过 HTTP 提交载荷来验证提交入口，
+而 web/app.py 在通关时会调 solves.rec() 写通关记录。
+因此必须先把记录重定向到临时文件，否则每跑一次
+就会往真实进度里塞 3 条用户没打过的通关。
 """
 import os
 import re
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 
-from lab import arena, flags, levels  # noqa: E402
+# 必须在 import web.app 之前设置。
+REAL_STORE = os.path.join(ROOT, "lab", "solves.jsonl")
+REAL_BEFORE = open(REAL_STORE, "rb").read() if os.path.isfile(REAL_STORE) else b""
+_TMP = tempfile.NamedTemporaryFile(prefix="lab_goal_", suffix=".jsonl",
+                                   delete=False)
+_TMP.close()
+os.environ["LAB_SOLVES"] = _TMP.name
+
+from lab import arena, flags, levels, solves  # noqa: E402
 from web.app import app  # noqa: E402
 
 c = app.test_client()
@@ -71,9 +85,8 @@ print("  提交后同页返回: PASS=%s 真 flag=%s 轨迹=%s"
       % ("PASS" in page, bool(FLAG.search(page)), "执行轨迹" in page))
 hi = c.post("/arena/mcp01/high", data={"payload": LOW["mcp01"]}).data.decode()
 print("  high 档同页返回: 真 flag=%s（应为 False）" % bool(FLAG.search(hi)))
-print("  通关记录      : %d 条，文件 %s"
-      % (len(__import__("lab.solves", fromlist=["x"]).allrows()),
-         os.path.relpath(__import__("lab.solves", fromlist=["x"]).path(), ROOT)))
+print("  通关记录      : %d 条（临时文件 %s）"
+      % (len(solves.allrows()), os.path.basename(solves.path())))
 
 print()
 print("=" * 72)
@@ -90,5 +103,19 @@ for cid in arena.CHALLENGES:
             srcok += 1
 print("  提交表单+校验表单+对照表 : %d/%d" % (okpages, n * 3))
 print("  三档源码块 >=3          : %d/%d" % (srcok, n * 3))
+
 print()
-print("目标四项全部达成。" if okpages == n * 3 and srcok == n * 3 and wired else "仍有缺口。")
+print("=" * 72)
+print("隔离自检：本脚本没有动过你的真实进度")
+print("=" * 72)
+_real = open(REAL_STORE, "rb").read() if os.path.isfile(REAL_STORE) else b""
+same = _real == REAL_BEFORE
+print("  真实进度文件 %s" % ("未被本脚本写入" if same else "被写入了！"))
+print("  提交入口验证所写的 %d 条记录落在临时文件，已删除"
+      % len(solves.allrows()))
+os.unlink(_TMP.name)
+
+print()
+ok = okpages == n * 3 and srcok == n * 3 and wired and same
+print("目标四项全部达成。" if ok else "仍有缺口。")
+sys.exit(0 if ok else 1)
