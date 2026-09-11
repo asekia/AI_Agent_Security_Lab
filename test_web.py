@@ -7,6 +7,10 @@ flag 校验能不能分辨真伪、通关记录写没写进去。
 这层容易被漏测：引擎全绿但表单字段名写错，用户照样通不了关。
 本文件把 HTTP 契约锁住。
 
+**测试隔离**：本文件会把通关记录重定向到临时文件。
+否则跑一遍测试就会写入 18 条"通关"，用户打开页面会看到
+自己从没打过的关卡标着 flag —— 假进度比没进度更糟。
+
 运行:
     .\\.venv\\Scripts\\python.exe test_web.py
 """
@@ -14,10 +18,21 @@ import base64
 import os
 import re
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
+
+# 必须在 import web.app 之前设置：app 导入时会拉起 lab.solves。
+REAL_STORE = os.path.join(ROOT, "lab", "solves.jsonl")
+_TMP = tempfile.NamedTemporaryFile(prefix="lab_solves_test_", suffix=".jsonl",
+                                   delete=False)
+_TMP.close()
+os.environ["LAB_SOLVES"] = _TMP.name
+
+# 记录真实进度文件的原始内容，跑完对比，证明本次测试没写过它。
+REAL_BEFORE = open(REAL_STORE, "rb").read() if os.path.isfile(REAL_STORE) else b""
 
 from lab import arena, flags, solves  # noqa: E402
 from web.app import app  # noqa: E402
@@ -174,9 +189,10 @@ def main() -> int:
 
     print()
     print("=" * 74)
-    print("通关记录")
+    print("通关记录（写入临时文件，不碰真实进度）")
     print("=" * 74)
     rows = solves.allrows()
+    chk("记录用的是临时文件", solves.path() == _TMP.name, solves.path())
     chk("记录文件已生成", os.path.isfile(solves.path()))
     chk("有通关记录", len(rows) > 0, len(rows))
     got = {(r["cid"], r["level"]) for r in rows}
@@ -190,6 +206,14 @@ def main() -> int:
     chk("记录里的 flag 可校验",
         all(flags.verify(r["cid"], r["level"], r["flag"]) for r in rows))
     chk("has() 与实际一致", solves.has("mcp01", "low"))
+
+    # 这条是"测试不会伪造用户进度"的证明：
+    # 记录本体被改了，真实文件必须没被动过。
+    _real = open(REAL_STORE, "rb").read() if os.path.isfile(REAL_STORE) else b""
+    chk("真实进度文件未被本次测试写入", _real == REAL_BEFORE,
+        "真实文件大小 %d -> %d" % (len(REAL_BEFORE), len(_real)))
+
+    os.unlink(_TMP.name)  # 清理临时文件
 
     print()
     print("=" * 74)

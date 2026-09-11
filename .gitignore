@@ -43,3 +43,4 @@ lab/solves.jsonl
 # OS files
 .DS_Store
 Thumbs.db
+lab/solves.testrun.bak

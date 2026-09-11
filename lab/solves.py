@@ -3,6 +3,10 @@
 记录落在 lab/solves.jsonl，一行一条，便于审计与回看历史。
 判定本身在 lab/arena.py；本模块只负责"记下来"与"读出来"。
 
+**测试隔离**：环境变量 LAB_SOLVES 可覆盖记录路径。
+测试必须指向临时文件 —— 否则跑一次测试就会把用户从没打过的关卡
+标成"已通关"，页面上的进度就成了假的。
+
 函数命名保持短且无下划线: rec / allrows / has / path。
 """
 from __future__ import annotations
@@ -12,12 +16,13 @@ import os
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STORE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "solves.jsonl")
+DEFAULT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "solves.jsonl")
+ENV = "LAB_SOLVES"
 
 
 def path() -> str:
-    """返回通关记录文件路径。"""
-    return STORE
+    """返回通关记录路径（每次调用都读环境变量，便于测试隔离）。"""
+    return os.environ.get(ENV) or DEFAULT
 
 
 def rec(cid: str, level: str, flag: str, note: str = "") -> dict:
@@ -39,17 +44,18 @@ def rec(cid: str, level: str, flag: str, note: str = "") -> dict:
         "flag": flag,
         "note": note,
     }
-    with open(STORE, "a", encoding="utf-8") as f:
+    with open(path(), "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     return entry
 
 
 def allrows() -> list[dict]:
     """读取全部通关记录。"""
-    if not os.path.isfile(STORE):
+    f0 = path()
+    if not os.path.isfile(f0):
         return []
     rows = []
-    with open(STORE, "r", encoding="utf-8") as f:
+    with open(f0, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line:
