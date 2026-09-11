@@ -184,14 +184,15 @@ FLAG = re.compile(r"flag\{[0-9a-f]{16}\}")
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/arena.py` | 10 关定义与四段流水线（核心） |
+| `lab/arena.py` | 18 关定义与四段流水线（核心） |
 | `lab/flags.py` | flag 签发与校验（HMAC + 本机密钥） |
 | `lab/levels.py` | low / medium / high 分级语义 |
 | `lab/solves.py` | 通关记录，落在 `lab/solves.jsonl` |
 | `web/app.py` | 路由 `/arena`、`/arena/<cid>/<level>` |
-| `web/templates/arena.html` | 攻击台页面（提交、轨迹、源码对照、校验） |
+| `web/templates/arena.html` | 攻击台页面（提交、轨迹、三档源码并列、校验） |
 | `test_arena.py` | 判定引擎验证：18 关 × 3 难度，157 项，`python test_arena.py` |
-| `test_web.py` | Web 层验证：HTTP 提交、通关记录、flag 校验，78 项，`python test_web.py` |
+| `test_web.py` | Web 层验证：HTTP 提交、通关记录、flag 校验、源码并列，79 项 |
+| `verify_goal.py` | 一次性自检：把靶场四要素逐条打印成可核对证据 |
 | `demos/` | **旧版预制剧本**，保留作对照，不要求动手 |
 | `docs/kb/prot-*.md` | 扩展攻击面的原理与防御（5 篇） |
 
