@@ -22,6 +22,7 @@ from lab import arena  # noqa: E402
 from lab import flags  # noqa: E402
 from lab import kb_map  # noqa: E402
 from lab import levels  # noqa: E402
+from lab import llmconf  # noqa: E402
 from lab import selfaudit  # noqa: E402
 from lab import solves  # noqa: E402
 from lab import runner  # noqa: E402
@@ -83,12 +84,15 @@ app = Flask(__name__)
 # 新任务开始后整体替换，任务内部不会只保留最后一个工具调用。
 _current_task_run: dict = {}
 # 真实 LLM 模式配置（仅内存，不落盘）
+# 配置来源优先级：本机文件（设置页保存的）> 环境变量 > 默认值。
+# 本机文件优先，是因为用户是在网页上填的；环境变量作为无界面部署的入口。
+_saved = llmconf.load()
 _llm_config: dict = {
-    "mode": os.environ.get("LAB_LLM_MODE", "real"),  # real | mock
-    "provider": os.environ.get("LLM_PROVIDER", "openai"),
-    "api_key": os.environ.get("LLM_API_KEY", ""),
-    "base_url": os.environ.get("OPENAI_BASE_URL", ""),
-    "model": os.environ.get("LAB_MODEL", ""),
+    "mode": _saved.get("mode") or os.environ.get("LAB_LLM_MODE", "real"),
+    "provider": _saved.get("provider") or os.environ.get("LLM_PROVIDER", "openai"),
+    "api_key": _saved.get("api_key") or os.environ.get("LLM_API_KEY", ""),
+    "base_url": _saved.get("base_url") or os.environ.get("OPENAI_BASE_URL", ""),
+    "model": _saved.get("model") or os.environ.get("LAB_MODEL", ""),
 }
 
 
@@ -427,7 +431,12 @@ def log_page():
 @app.route("/settings")
 def settings_page():
     """渲染设置页面（mock / 真实 LLM 切换）。"""
-    return render_template("settings.html", config=_llm_config)
+    cfg = dict(_llm_config)
+    saved = llmconf.load()
+    cfg["saved"] = bool(saved)
+    cfg["remember"] = bool(saved.get("api_key"))
+    cfg["store"] = os.path.basename(llmconf.path())
+    return render_template("settings.html", config=cfg)
 
 
 # ---------------------------------------------------------------------------
@@ -654,14 +663,15 @@ def api_log():
 
 @app.route("/api/settings", methods=["POST"])
 def api_settings():
-    """更新 LLM 模式配置（仅内存，不落盘）。
+    """更新 LLM 配置并写入本机文件。
 
     请求体 JSON:
         mode: "mock" 或 "real"。
         provider / api_key / base_url / model: 真实模式参数（可选）。
+        remember: 是否把 api_key 写入本机文件（默认 False，密钥不落盘）。
 
     返回:
-        更新后的配置（不含 api_key 明文）。
+        更新后的配置（api_key 以 *** 代替）。
     """
     global _llm_config
     data = request.get_json(silent=True) or {}
@@ -680,9 +690,21 @@ def api_settings():
             _llm_config["model"] = str(data["model"]).strip()
     _apply_llm_config()
 
+    # 落盘：非敏感字段总是保存；api_key 仅在显式勾选时保存。
+    keep = bool(data.get("remember"))
+    if data.get("forget"):
+        llmconf.forget(_llm_config)
+        _llm_config["api_key"] = ""
+        _apply_llm_config()
+    else:
+        llmconf.save(_llm_config, keep=keep)
+
     # 返回时隐藏 api_key
     safe = dict(_llm_config)
     safe["api_key"] = "***" if safe.get("api_key") else ""
+    safe["remember"] = keep
+    safe["store"] = os.path.basename(llmconf.path())
+    safe["persisted"] = os.path.isfile(llmconf.path())
     return jsonify(safe)
 
 

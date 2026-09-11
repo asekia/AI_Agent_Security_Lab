@@ -24,7 +24,14 @@
       </div>
       <div class="form-row">
         <label for="api_key">API Key</label>
-        <input type="password" id="api_key" name="api_key" placeholder="仅保存在内存，不写入磁盘">
+        <input type="password" id="api_key" name="api_key" placeholder="{{ '已保存（留空则不修改）' if config.api_key else '粘贴你的 key' }}">
+      </div>
+      <div class="form-row">
+        <label for="remember">记住 key</label>
+        <label style="font-weight:400">
+          <input type="checkbox" id="remember" name="remember" {{ 'checked' if config.remember else '' }}>
+          把 key 写入本机文件 <span class="mono">lab/llm.json</span>（换机不通用，已 gitignore）
+        </label>
       </div>
       <div class="form-row">
         <label for="base_url">Base URL</label>
@@ -34,10 +41,16 @@
         <label for="model">Model</label>
         <input type="text" id="model" name="model" placeholder="gpt-4o" value="{{ config.model }}">
       </div>
-      <p class="warn">注意：真实模式会向您配置的端点发起网络调用。API key 仅保存在进程内存（os.environ），重启后即失效。</p>
+      <p class="warn">真实模式会向你配置的端点发起网络调用。Base URL 与 Model 一定会保存到本机文件，重启后仍在；<b>API key 只有勾选"记住 key"才会保存</b>，否则仅存在于进程内存，服务重启后失效。</p>
+      <p class="muted">当前配置来源：<span class="mono">{{ config.store }}</span>
+        {% if config.saved %}<span class="tag tag-ok">已保存到本机</span>{% else %}<span class="tag node">未保存到本机</span>{% endif %}
+      </p>
     </div>
     <button type="submit" class="btn primary">保存设置</button>
     <span id="save-status" class="status"></span>
+    {% if config.saved and config.remember %}
+    <button type="button" id="forget-btn" class="btn" style="margin-left:8px">清除已保存的 key</button>
+    {% endif %}
   </form>
 </div>
 
@@ -61,16 +74,19 @@ modeSel.addEventListener('change', () => {
   realFields.style.display = modeSel.value === 'real' ? 'block' : 'none';
 });
 
-document.getElementById('settings-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const status = document.getElementById('save-status');
-  const body = {
+function payload(extra) {
+  return Object.assign({
     mode: modeSel.value,
     provider: document.getElementById('provider').value,
     api_key: document.getElementById('api_key').value,
     base_url: document.getElementById('base_url').value,
     model: document.getElementById('model').value,
-  };
+    remember: document.getElementById('remember').checked,
+  }, extra || {});
+}
+
+async function send(body) {
+  const status = document.getElementById('save-status');
   status.textContent = '保存中...';
   status.className = 'status running';
   try {
@@ -80,16 +96,31 @@ document.getElementById('settings-form').addEventListener('submit', async (e) =>
       body: JSON.stringify(body)
     });
     const data = await resp.json();
-    if (data.error) { status.textContent = '错误: ' + data.error; status.className = 'status bad'; return; }
-    status.textContent = '已保存 (模式: ' + data.mode + ')';
+    if (data.error) { status.textContent = '错误: ' + data.error; status.className = 'status bad'; return null; }
+    status.textContent = '已保存 (模式: ' + data.mode + (data.persisted ? '，已写入 ' + data.store : '') + ')';
     status.className = 'status ok';
     const badge = document.getElementById('mode-badge');
     if (badge) badge.textContent = '模式: ' + data.mode;
     document.getElementById('api_key').value = '';
+    return data;
   } catch (err) {
     status.textContent = '请求失败: ' + err;
     status.className = 'status bad';
+    return null;
   }
+}
+
+document.getElementById('settings-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await send(payload());
 });
+
+const forgetBtn = document.getElementById('forget-btn');
+if (forgetBtn) {
+  forgetBtn.addEventListener('click', async () => {
+    if (!confirm('清除本机保存的 API key？Base URL 与 Model 会保留。')) return;
+    await send(payload({ forget: true }));
+  });
+}
 </script>
 {% endblock %}

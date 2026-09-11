@@ -31,10 +31,18 @@ _TMP = tempfile.NamedTemporaryFile(prefix="lab_solves_test_", suffix=".jsonl",
 _TMP.close()
 os.environ["LAB_SOLVES"] = _TMP.name
 
+# 同样隔离 LLM 配置：测试不得读写用户的 lab/llm.json（那里可能有真 key）。
+REAL_CONF = os.path.join(ROOT, "lab", "llm.json")
+_CONF_BEFORE = open(REAL_CONF, "rb").read() if os.path.isfile(REAL_CONF) else b""
+_TMPC = tempfile.NamedTemporaryFile(prefix="lab_conf_test_", suffix=".json",
+                                    delete=False)
+_TMPC.close()
+os.environ["LAB_LLM_CONF"] = _TMPC.name
+
 # 记录真实进度文件的原始内容，跑完对比，证明本次测试没写过它。
 REAL_BEFORE = open(REAL_STORE, "rb").read() if os.path.isfile(REAL_STORE) else b""
 
-from lab import arena, flags, solves  # noqa: E402
+from lab import arena, flags, llmconf, solves  # noqa: E402
 from web.app import app  # noqa: E402
 
 ok = 0
@@ -214,6 +222,61 @@ def main() -> int:
         "真实文件大小 %d -> %d" % (len(REAL_BEFORE), len(_real)))
 
     os.unlink(_TMP.name)  # 清理临时文件
+
+    print()
+    print("=" * 74)
+    print("设置页：key 能存能生效，且默认不落盘")
+    print("=" * 74)
+    r = c.get("/settings")
+    s = r.data.decode()
+    chk("设置页 200", r.status_code == 200)
+    for f in ('name="mode"', 'name="provider"', 'name="api_key"',
+              'name="base_url"', 'name="model"', 'name="remember"'):
+        chk("表单含 %s" % f, f in s)
+
+    def save(**kw):
+        body = {"mode": "real", "provider": "openai"}
+        body.update(kw)
+        return c.post("/api/settings", json=body).get_json()
+
+    conf = llmconf.path()
+    os.path.exists(conf) and os.unlink(conf)
+
+    # 不勾"记住 key"：非敏感字段落盘，key 不落盘
+    d = save(api_key="sk-SHOULD-NOT-PERSIST", base_url="https://x.test/v1",
+             model="m1", remember=False)
+    chk("保存返回 200 结构", d and d.get("api_key") == "***")
+    chk("不勾记住时 key 未落盘",
+        "sk-SHOULD-NOT-PERSIST" not in open(conf, encoding="utf-8").read())
+    chk("base_url 已落盘", llmconf.load().get("base_url") == "https://x.test/v1")
+
+    # 勾上"记住 key"：key 落盘
+    save(api_key="sk-KEEP-ME", base_url="https://x.test/v1", model="m1",
+         remember=True)
+    chk("勾记住后 key 落盘", llmconf.load().get("api_key") == "sk-KEEP-ME")
+
+    # 不回显：API 与页面都不得出现 key 明文
+    chk("API 不回显 key", "sk-KEEP-ME" not in str(save(remember=True)))
+    chk("页面不回显 key", "sk-KEEP-ME" not in c.get("/settings").data.decode())
+
+    # 生效：写入进程环境变量，供 LLM 调用读取
+    import os as _os
+    chk("key 已注入环境变量", _os.environ.get("LLM_API_KEY") == "sk-KEEP-ME")
+    chk("base_url 已注入环境变量",
+        _os.environ.get("OPENAI_BASE_URL") == "https://x.test/v1")
+
+    # 清除 key：只删 key，保留端点配置
+    save(forget=True)
+    chk("清除后 key 已消失", not llmconf.load().get("api_key"))
+    chk("清除后 base_url 保留",
+        llmconf.load().get("base_url") == "https://x.test/v1")
+
+    # 非法 mode 被拒
+    chk("非法 mode 被拒", c.post("/api/settings", json={"mode": "x"}).status_code == 400)
+
+    os.unlink(_TMPC.name)
+    _realc = open(REAL_CONF, "rb").read() if os.path.isfile(REAL_CONF) else b""
+    chk("真实 LLM 配置未被本次测试改动", _realc == _CONF_BEFORE)
 
     print()
     print("=" * 74)

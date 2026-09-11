@@ -44,3 +44,4 @@ lab/solves.jsonl
 .DS_Store
 Thumbs.db
 lab/solves.testrun.bak
+lab/llm.json
