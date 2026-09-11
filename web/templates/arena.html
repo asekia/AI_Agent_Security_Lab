@@ -56,13 +56,31 @@
 </table>
 {% endif %}
 
-<h2>源码对照 · {{ srcmap[level].label }}档</h2>
-<p class="muted">{{ srcmap[level].defense }}</p>
-<pre class="code">{{ srcmap[level].source }}</pre>
-<p class="muted">对比其他难度：
-  {% for l in lvs %}{% if l.id != level %}<a href="{{ url_for('arena_page', cid=ch.cid, level=l.id) }}">{{ l.label }}档</a>{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}
-  · <a href="{{ url_for('arena_index') }}">返回关卡列表</a>
-</p>
+<h2>源码对照 · 三档并列</h2>
+<p class="muted">同一关在三个难度下的防御实现。对照着看才能判断<b>改哪一层才真正有效</b>——只加输入净化会被绕过，加上出口闸门才挡得住。</p>
+<table class="asi-table">
+  <thead>
+    <tr>
+      {% for l in lvs %}
+      <th style="width:33.33%;vertical-align:top"{% if l.id == level %} class="cur"{% endif %}>
+        {{ l.label }}档{% if l.id == level %} · 当前{% endif %}
+        <div class="muted" style="font-weight:400">{{ srcmap[l.id].defense }}</div>
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      {% for l in lvs %}
+      <td style="vertical-align:top"{% if l.id == level %} class="cur"{% endif %}>
+        <pre class="code">{{ srcmap[l.id].source }}</pre>
+        {% if l.id != level %}<a href="{{ url_for('arena_page', cid=ch.cid, level=l.id) }}">切到{{ l.label }}档</a>{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+  </tbody>
+</table>
+<p class="muted"><a href="{{ url_for('arena_index') }}">返回关卡列表</a></p>
 
 <h2>校验 flag</h2>
 {% if vres %}<p><code class="ev">{{ vres }}</code></p>{% endif %}

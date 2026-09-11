@@ -150,6 +150,30 @@ def main() -> int:
 
     print()
     print("=" * 74)
+    print("源码对照：三档必须并列渲染")
+    print("=" * 74)
+    # 用户要的是"对照"，不是"点来点去"。所以三档源码必须同页可见。
+    # 注意转义：模板用 Jinja/MarkupSafe，单引号转成 &#39;，
+    # 而 html.escape 转成 &#x27; —— 用错转义器会误报"源码缺失"。
+    from markupsafe import escape as mescape
+    nsrc = 0
+    for cid in arena.CHALLENGES:
+        for lv in ("low", "medium", "high"):
+            _, s = post(cid, lv)
+            if "源码对照 · 三档并列" not in s:
+                bad.append("%s/%s 无对照表" % (cid, lv))
+                continue
+            for blk in arena.sources(cid, lv):
+                frag = str(mescape(blk["source"].split("\n")[0][:34]))
+                if frag in s:
+                    nsrc += 1
+                else:
+                    bad.append("%s/%s 缺 %s 源码" % (cid, lv, blk["level"]))
+    chk("三档源码并列渲染 %d/%d" % (nsrc, len(arena.CHALLENGES) * 9),
+        nsrc == len(arena.CHALLENGES) * 9)
+
+    print()
+    print("=" * 74)
     print("通关记录")
     print("=" * 74)
     rows = solves.allrows()

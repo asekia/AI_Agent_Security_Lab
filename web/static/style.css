@@ -420,6 +420,11 @@ h4 { font-size: 14px; font-weight: 600; margin: 14px 0 6px; color: var(--primary
 }
 pre.code { margin: 8px 0 4px; }
 
+/* 源码对照表里当前难度那一列：加淡背景以便一眼分辨 */
+.asi-table td.cur,
+.asi-table th.cur { background: var(--fill-2, rgba(0, 0, 0, 0.03)); }
+.asi-table td pre.code { font-size: 12px; white-space: pre-wrap; }
+
 .thought-text { color: var(--thought); }
 .final-text { color: var(--final); }
 
