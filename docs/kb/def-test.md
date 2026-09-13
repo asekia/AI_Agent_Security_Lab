@@ -121,10 +121,34 @@ flag 确实是本机签发的。绿的测试掩盖了被自己弄脏的状态。
 | --- | --- |
 | `smoke_test.py` | 本地冒烟测试脚本，可作为评测驱动的参照 |
 | `test_arena.py` | 靶场判定引擎验证（157 项）：含"high 必须打不通"等强制项 |
-| `test_web.py` | Web 层验证（81 项）：含"不得写入真实进度"的隔离断言 |
+| `test_web.py` | Web 层验证（100 项）：含"不得写入真实进度"的隔离断言 |
+| `test_llm.py` | 真实 LLM 链路验证（21 项）：本地假端点验证配置→HTTP→工具调用全链路 |
 | `verify_goal.py` | 状态自检：确认该有的东西真的在，而不只是功能可用 |
 | `lab/runner.py` | 各场景统一执行入口 |
 | `lab/framework/defenses.py` | 被评测的防御实现 |
+
+### 怎么在没有真 key 的情况下验证"接真模型能用"
+
+这是评测里很实用的一招：**自己起一个假的 OpenAI 兼容端点**，
+把链路指过去，就能验证除"模型本身聪明不聪明"之外的全部环节。
+
+```text
+本地起 HTTPServer，POST /v1/chat/completions
+  首轮：返回一个 tool_call（function calling）
+  次轮：看到 messages 里有 role=tool，就返回最终文本
+
+然后断言：
+  [1] 请求真的到达了端点            → 证明配置流通了
+  [2] 路径 /v1/chat/completions     → 拼接正确
+  [3] Authorization: Bearer <key>   → 鉴权头正确
+  [4] 请求体含 tools / parameters   → function calling 定义合法
+  [5] 第二轮含 role=tool 与 tool_calls → 工具调用被解析并回传
+  [6] 缺 key 时有可读提示且不发请求
+  [7] 端点不可达时返回可读错误，而不是静默 200
+```
+
+价值在于：用户填完真 key 遇到报错时，能立刻区分"key/端点的问题"
+还是"代码链路的问题"。没有这层测试，这两种情况在报错上长得一样。
 
 ## 8. 参考
 

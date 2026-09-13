@@ -151,10 +151,16 @@ def _detect_exfil(outbox_entries: list[dict]) -> bool:
 
 
 def _apply_llm_config() -> None:
-    """将内存中的 LLM 配置写入进程环境变量（仅内存，不落盘）。
+    """把当前 LLM 配置同步到进程环境变量。
 
-    真实模式启用时，将 API key / base url / model 写入 os.environ，
-    供 lab.mock_llm.get_llm 读取。mock 模式则清除相关环境变量。
+    真实模式启用时写入 LLM_PROVIDER / LLM_API_KEY / OPENAI_BASE_URL / LAB_MODEL，
+    供 **lab/framework/llm.py 的 OpenAICompatChatModel** 读取。
+    注意不是 lab/mock_llm.py —— 那个模块只有确定性模拟，不读环境变量。
+
+    mock 模式则清除上述变量。
+
+    配置本身还会落盘到 lab/llm.json（见 lab/llmconf.py），
+    这样服务重启后不必重填；api_key 是否落盘由设置页的"记住 key"决定。
     """
     if _llm_config["mode"] == "real":
         os.environ["LLM_PROVIDER"] = _llm_config.get("provider", "openai")
