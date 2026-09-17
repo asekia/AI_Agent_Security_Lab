@@ -1,7 +1,6 @@
 # LangGraph 漏洞靶场 (langgraph-vuln-lab)
 
-一个用于练习 **OWASP Agentic AI Top 10（ASI01–ASI10）** 的 LangGraph 安全靶场。
-默认使用本地 Mock，也可按需接入真实 LLM。
+可动手的 AI Agent 安全靶场：18 个关卡覆盖 **OWASP Agentic AI Top 10（ASI01–ASI10）** 与扩展攻击面（MCP、A2A、向量库、多模态、护栏等），每关 low / medium / high 三档难度，提交攻击载荷即可判定通关、取得 flag。默认离线运行，也可接入任意 OpenAI 兼容模型。
 
 > ⚠️ **安全警告**：本项目包含故意漏洞，仅用于本地学习和授权测试。
 > 邮件只写入本地 outbox；接入真实 LLM 时会按配置访问对应接口。
@@ -373,3 +372,13 @@ python demos\agent_asi01.py --backend real
 
 本项目**仅用于教育、研究与授权测试**。作者不对任何滥用行为负责。
 使用前请确保你拥有对目标系统的**明确书面授权**。
+
+---
+
+## 10. 参考资料
+
+- [OWASP GenAI Security Project — Agentic AI Top 10（ASI01–ASI10）](https://genai.owasp.org/)
+- [OWASP Top 10 for LLM Applications](https://genai.owasp.org/llm-top-10/)
+- [Model Context Protocol（MCP）](https://modelcontextprotocol.io/)
+- [Agent2Agent Protocol（A2A）](https://a2a-protocol.org/)
+- [LangGraph 文档](https://docs.langchain.com/oss/python/langgraph/overview)
