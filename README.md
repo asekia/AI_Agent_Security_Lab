@@ -191,7 +191,7 @@ python -c "from lab.watermark import lab; r=lab.run(reps=12, n=200); print(r['wa
 # 改写预算扫描：同等预算下，朴素改写 vs 增强清洗
 python -c "from lab.watermark import lab; [print('%.0f%% naive=%.2f scrub=%.2f' % (x['frac']*100, x['naive']['tpr'], x['scrub']['tpr'])) for x in lab.sweep()['rows']]"
 
-# 回归测试（43 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层）
+# 回归测试（55 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层）
 python test_watermark.py
 ```
 

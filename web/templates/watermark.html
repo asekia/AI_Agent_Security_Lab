@@ -24,7 +24,15 @@
   <p class="muted">
     当前配置：reps={{ r.config.reps }}，n={{ r.config.n }}，gamma={{ r.config.gamma }}，
     delta={{ r.config.delta }}，改写预算={{ (r.config.frac * 100) | int }}%，词表={{ r.config.vocab }}。
-    阈值在 <b>FPR={{ r.config.fpr }}</b> 下定得 <code>z &gt; {{ '%.3f' % r.threshold }}</code>。
+    阈值在 <b>FPR={{ r.config.fpr }}</b> 下定得 <code>z &gt; {{ '%.3f' % r.threshold }}</code>
+    （校准集 {{ r.calib.n }} 样本，可分辨精度 {{ '%.4f' % r.calib.fpr_res }}，
+    <b>留出集实测 FPR={{ '%.3f' % r.holdout.fpr_emp }}</b>，{{ r.holdout.hits }}/{{ r.holdout.n }} 命中）。
+  </p>
+  <p class="muted">
+    <b>为什么阈值要这样定</b>：经验分位数能分辨的最小 FPR 是 1/(N+1)。
+    用 30 个样本取"FPR=0.01 的分位数"，拿到的其实是最大值，对应约 0.032 的误报率——
+    标着 0.01 却是 0.03。所以校准集按目标 FPR 自动定尺寸，
+    并且<b>在留出集上实测</b> FPR，而不是拿校准集自证（那是循环论证）。
   </p>
 </div>
 
@@ -156,7 +164,50 @@
   {% endfor %}
 </table>
 
-<h2>5. 怎么读这些数（三个结论）</h2>
+<h2>5. 文本长度曲线：短文本本来就检不出来</h2>
+<p class="muted">
+  长度是最关键的单一变量（z 随 sqrt(T) 增长），也是<b>防御方唯一能强制的变量</b>。
+  注意区间刻意从 5 token 起：若只测 100 以上，delta=2.0 下全部 TPR=1.00，
+  看不出任何长度效应 —— 那时"长度影响"只是一句口号。<b>边界必须去边界区间找。</b>
+</p>
+<table class="asi-table">
+  <tr>
+    <th style="width:12%;">长度（token）</th>
+    <th style="width:12%;">检出（原始计分）</th>
+    <th style="width:14%;">水印 TPR</th>
+    <th style="width:14%;">阴性 FPR</th>
+    <th style="width:12%;">z 均值</th>
+    <th>读法</th>
+  </tr>
+  {% for row in lencur.rows %}
+  <tr>
+    <td>{{ row.len }}</td>
+    <td class="muted">{{ (row.tpr * row.n) | round(0) | int }}/{{ row.n }}</td>
+    <td><b>{{ '%.2f' % row.tpr }}</b></td>
+    <td>{{ '%.2f' % row.false_pos }}</td>
+    <td>{{ '%.2f' % row.z_mean }}</td>
+    <td class="muted">
+      {% if row.tpr < 0.5 %}
+        统计量不足，此处<b>不应作任何判定</b>
+      {% elif row.tpr < 0.95 %}
+        边界区：结论随样本波动
+      {% else %}
+        可作判定
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">
+  这条曲线解释了"短文本改写为什么能逃"：不是因为改写强，而是因为
+  <b>检测本来就在短文本上不成立</b>。任何"水印检出 AI 生成"的主张，
+  都必须附长度下限。
+  <br>
+  <b>精度提示</b>：reps={{ lencur.config.reps }} 时 TPR 只能取 1/{{ lencur.config.reps }} 的倍数，
+  所以两位小数是显示格式、不是精度。原始计分一列就是为此而给。
+</p>
+
+<h2>6. 怎么读这些数（三个结论）</h2>
 <table class="asi-table">
   <tr><th style="width:24%;">结论</th><th>依据</th></tr>
   <tr>
@@ -177,7 +228,7 @@
   </tr>
 </table>
 
-<h2>6. 工程上怎么用这套东西</h2>
+<h2>7. 工程上怎么用这套东西</h2>
 <table class="asi-table">
   <tr><th style="width:22%;">层</th><th style="width:26%;">文件</th><th>替换点</th></tr>
   <tr><td>水印方案</td><td><code>lab/watermark/kgw.py</code></td>

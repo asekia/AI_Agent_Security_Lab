@@ -68,11 +68,22 @@ chk("绿名单可复现", g1 == kgw.green(KEY, (5,), 0.25))
 chk("不同密钥绿名单不同", g1 != kgw.green(b"zzz", (5,), 0.25))
 
 # FPR 受控：校准阈值下，阴性样本通过率应接近目标
-c = lab.calib(m, KEY, 200, reps=60, seed0=100)
+c = lab.calib(m, KEY, 200, reps=60, seed0=100, fpr=0.01)
 thr = c["thr_0.01"]
+# 校准集规模必须与目标 FPR 匹配（1/(N+1) 是可分辨下限）
+chk("校准集按 FPR 自动定尺寸", c["n"] >= 101, "n=%d" % c["n"])
+chk("校准可分辨精度 ≤ 目标 FPR", c["fpr_res"] <= 0.011,
+    "res=%.4f" % c["fpr_res"])
+# 留出集实测 FPR —— 不能用校准集自证
+ho = lab.holdout(m, KEY, thr, 200, reps=60)
+chk("留出集实测 FPR 受控（≤2%）", ho["fpr_emp"] <= 0.02,
+    "实测=%.3f (%d/%d)" % (ho["fpr_emp"], ho["hits"], ho["n"]))
+chk("留出集用的是新样本（与校准集无重叠）",
+    ho["hits"] <= 2, "hits=%d" % ho["hits"])
+
 neg = [kgw.gen(m, b"", 200, delta=0.0, seed=900 + r) for r in range(60)]
 r_neg = lab.tpr(neg, KEY, thr)
-chk("校准集 FPR 受控（≤10%）", r_neg["tpr"] <= 0.10, "实测=%.3f" % r_neg["tpr"])
+chk("阴性文本检出率受控（≤10%）", r_neg["tpr"] <= 0.10, "实测=%.3f" % r_neg["tpr"])
 
 pos = [kgw.gen(m, KEY, 200, seed=950 + r) for r in range(30)]
 r_pos = lab.tpr(pos, KEY, thr)
@@ -189,6 +200,12 @@ chk("run 返回完整对照矩阵", all(
                      "steal", "rules", "config")))
 chk("run 记录配置（可复现所需）", "frac" in r["config"] and "fpr" in r["config"])
 chk("run 指标含保真度", "sim" in r["naive"] and "sim" in r["scrubbed"])
+# 阈值必须来自与目标 FPR 匹配的校准集，并且附留出集实测 FPR
+chk("run 附留出集 FPR", "fpr_emp" in r["holdout"],
+    "ho=%s" % r["holdout"])
+chk("run 阈值与校准一致", r["threshold"] == r["calib"]["thr_0.01"])
+chk("run 留出集 FPR 受控", r["holdout"]["fpr_emp"] <= 0.05,
+    "实测=%.3f" % r["holdout"]["fpr_emp"])
 # 同一配置必须复现同一结果
 r2 = lab.run(reps=4, n=120, n_query=12)
 chk("同配置结果可复现",
@@ -200,11 +217,24 @@ chk("sweep 行内含朴素与增强", all(
     "naive" in row and "scrub" in row for row in sw["rows"]))
 chk("sweep 与 run 用同一阈值来源", sw["threshold"] == lab.setup(
     reps=4, n=120, n_query=12)["threshold"])
+chk("sweep 附留出集 FPR", "fpr_emp" in sw["holdout"])
 
-lc = lab.lencur(lengths=(40, 120), reps=4, n=160, n_query=12)
-chk("lencur 返回长度行", len(lc["rows"]) == 2)
+lc = lab.lencur(lengths=(5, 30, 200), reps=4, n=300, n_query=12)
+chk("lencur 返回长度行", len(lc["rows"]) == 3)
+chk("lencur 附留出集 FPR", "fpr_emp" in lc["holdout"])
 chk("长文本 z 高于短文本（曲线单调）",
-    lc["rows"][1]["z_mean"] > lc["rows"][0]["z_mean"])
+    lc["rows"][2]["z_mean"] > lc["rows"][0]["z_mean"])
+# 短文本必须检出率更低 —— 这是"短文本改几个词就能逃"的实测依据。
+# 若这里失败，说明要么区间没落在边界上，要么检测器行为变了。
+chk("边界区：5 token 检出率低于 200 token",
+    lc["rows"][0]["tpr"] < lc["rows"][2]["tpr"],
+    "5=%s 200=%s" % (lc["rows"][0]["tpr"], lc["rows"][2]["tpr"]))
+chk("边界区：5 token 的 z 低于判决阈值",
+    lc["rows"][0]["z_mean"] < lc["threshold"],
+    "z=%.2f thr=%.3f" % (lc["rows"][0]["z_mean"], lc["threshold"]))
+chk("阴性 FPR 在各长度均受控（≤10%）",
+    all(row["false_pos"] <= 0.10 for row in lc["rows"]),
+    str([row["false_pos"] for row in lc["rows"]]))
 
 print()
 print("=" * 74)

@@ -376,6 +376,8 @@ def watermark_page():
         "watermark.html",
         r=res,
         sweep=wmlab.sweep(reps=max(2, reps // 2), n=n, n_query=nq, gamma=gamma),
+        lencur=wmlab.lencur(reps=max(2, reps // 2), n=400, n_query=nq,
+                            gamma=gamma),
         doc=kb_map.kbdoc("mod-watermark"),
         qs={"reps": reps, "n": n, "nq": nq, "gamma": gamma},
     )

@@ -112,6 +112,8 @@ def main() -> int:
     chk("页面含保真度说明", "保真度" in s)
     chk("页面标注锚点信息", "锚点" in s or "z" in s)
     chk("页面链到 KB 文档", "mod-watermark" in s)
+    chk("页面展示留出集实测 FPR", "留出集实测 FPR" in s)
+    chk("页面解释阈值定法（可分辨精度）", "可分辨精度" in s)
     # 参数必须被夹紧，不能因为乱传而 500
     chk("越界参数仍 200", c.get(
         "/watermark?reps=999&n=1&nq=0&gamma=9").status_code == 200)
