@@ -115,7 +115,7 @@ KB_GROUPS = [
             ("mod-embed", "向量与嵌入弱点", "Vector & Embedding Weaknesses",
              "RAG 索引污染、跨租户检索泄露与嵌入反演。"),
             ("mod-watermark", "对抗水印攻击", "Adversarial Watermark Attacks",
-             "水印的窃取、去除与伪造：为何溯源线索不等于判定证据（只介绍，不设靶场）。"),
+             "水印的窃取、去除与伪造：为何溯源线索不等于判定证据。附可运行的对抗实验样本（不发 flag）。"),
         ],
     ),
     (

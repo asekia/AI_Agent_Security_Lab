@@ -345,6 +345,42 @@ def selfaudit_page():
     )
 
 
+@app.route("/watermark")
+def watermark_page():
+    """水印对抗实验页：跑一轮对照实验，用真实测量数字说明结论。
+
+    与靶场其他页面不同，本页**不发 flag**，展示的是测量结果。
+    参数可调，便于横向比较不同配置下的水印强度。
+    """
+    from lab.watermark import lab as wmlab
+
+    try:
+        reps = max(2, min(20, int(request.args.get("reps", 8))))
+    except ValueError:
+        reps = 8
+    try:
+        n = max(60, min(600, int(request.args.get("n", 200))))
+    except ValueError:
+        n = 200
+    try:
+        nq = max(5, min(120, int(request.args.get("nq", 40))))
+    except ValueError:
+        nq = 40
+    try:
+        gamma = max(0.05, min(0.9, float(request.args.get("gamma", 0.25))))
+    except ValueError:
+        gamma = 0.25
+
+    res = wmlab.run(reps=reps, n=n, n_query=nq, gamma=gamma)
+    return render_template(
+        "watermark.html",
+        r=res,
+        sweep=wmlab.sweep(reps=max(2, reps // 2), n=n, n_query=nq, gamma=gamma),
+        doc=kb_map.kbdoc("mod-watermark"),
+        qs={"reps": reps, "n": n, "nq": nq, "gamma": gamma},
+    )
+
+
 @app.route("/arena")
 def arena_index():
     """可动手靶场：关卡列表与已获得 flag。"""

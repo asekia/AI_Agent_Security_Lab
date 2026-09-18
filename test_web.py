@@ -103,6 +103,21 @@ def main() -> int:
     chk("未知关卡 404", c.get("/arena/nope/low").status_code == 404)
     chk("越界难度回落 low", c.get("/arena/asi01/zzz").status_code in (200, 302))
 
+    # 水印对抗实验页（测量页，不发 flag）
+    r = c.get("/watermark?reps=3&n=120&nq=10")
+    s = r.data.decode("utf-8")
+    chk("水印实验页 200", r.status_code == 200)
+    chk("页面含对照矩阵", "对照矩阵" in s)
+    chk("页面含预算扫描", "改写预算扫描" in s)
+    chk("页面含保真度说明", "保真度" in s)
+    chk("页面标注锚点信息", "锚点" in s or "z" in s)
+    chk("页面链到 KB 文档", "mod-watermark" in s)
+    # 参数必须被夹紧，不能因为乱传而 500
+    chk("越界参数仍 200", c.get(
+        "/watermark?reps=999&n=1&nq=0&gamma=9").status_code == 200)
+    chk("非数字参数仍 200", c.get(
+        "/watermark?reps=abc&n=xyz&nq=q&gamma=p").status_code == 200)
+
     print()
     print("=" * 74)
     print("HTTP 提交：low 能通关并发放 flag")

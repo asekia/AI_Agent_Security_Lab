@@ -179,6 +179,25 @@ python demos\agent_asi01.py --backend real
 > 真实模型对隐藏注入载荷的反应**不确定**（可能被劫持、也可能拒绝）——这正是
 > 框架版相比脚本化 mock 的教学差异点：漏洞是否被触发由真实模型的行为决定。
 
+### 水印对抗实验（离线可跑，不发 flag）
+
+`lab/watermark` 把水印的窃取 / 伪造 / 清洗做成**可测量的实验**，
+输出对照矩阵与曲线，而不是"播放预录结论"：
+
+```powershell
+# 对照矩阵（TPR@FPR、保真度、窃取成本与规则质量）
+python -c "from lab.watermark import lab; r=lab.run(reps=12, n=200); print(r['watermarked']['tpr'], r['scrubbed']['tpr'])"
+
+# 改写预算扫描：同等预算下，朴素改写 vs 增强清洗
+python -c "from lab.watermark import lab; [print('%.0f%% naive=%.2f scrub=%.2f' % (x['frac']*100, x['naive']['tpr'], x['scrub']['tpr'])) for x in lab.sweep()['rows']]"
+
+# 回归测试（43 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层）
+python test_watermark.py
+```
+
+> 这是**测量制**而非 flag 制：水印对抗的结论依赖 FPR 与文本长度，
+> 用"过/不过"表示会掩盖前提。原理见知识库「对抗水印攻击」条目，界面见 `/watermark`。
+
 ### Web 模式（可选，推荐用于演示）
 提供一个本地、离线的中文 Web 界面（DVWA/DVAIA 风格），用于查看漏洞映射表、运行攻击演示并查看结构化工具调用轨迹、在"游乐场"中输入自定义提示词、检查本地 sink、切换 mock / 真实 LLM 模式。
 
@@ -205,6 +224,7 @@ Web 界面页面：
 - `/playground` 游乐场：自定义提示词 + 单/多 Agent 模式 + 揭示隐藏注入载荷
 - `/kb` 知识库：53 篇攻防文档（按分组浏览）
 - `/selfaudit` 自评：以本机 Agent 实例为对象的一键自评
+- `/watermark` **水印对抗实验**：跑真实的水印 → 窃取 → 伪造 → 清洗全链条，输出对照矩阵与预算扫描曲线（测量页，不发 flag）
 - `/trace` 最近一次运行的完整轨迹
 - `/log` 攻击历史（持久化到 `lab/web/run_log.jsonl`）
 - `/settings` mock / 真实 LLM 模式切换与 key 管理
@@ -242,6 +262,10 @@ langgraph-vuln-lab/
 │   ├── selfaudit.py          # 自评：以本机 Agent 实例为对象
 │   ├── llmconf.py            # LLM 配置本机持久化（key 默认不落盘）
 │   ├── solves.py             # 通关记录
+│   ├── watermark/            # ★ 水印对抗实验样本（测量制，不发 flag）
+│   │   ├── kgw.py            #    KGW 绿名单水印内核（PRF + z 检验）
+│   │   ├── attack.py         #    窃取 / 伪造 / 清洗 / 对照组
+│   │   └── lab.py            #    指标与编排（run / sweep / lencur）
 │   ├── outbox.jsonl          # 本地邮件外发记录（运行时生成）
 │   ├── memory_store.json     # 记忆存储（运行时生成）
 │   └── state/                # 检查点数据库（运行时生成）
@@ -283,7 +307,7 @@ langgraph-vuln-lab/
 │   ├── asi08-principle.md
 │   ├── asi09-principle.md
 │   └── asi10-principle.md
-└── test_arena.py             # 靶场测试（158 项，另见 test_web / test_llm / smoke_test）
+└── test_arena.py             # 靶场测试（158 项，另见 test_web / test_llm / test_watermark / smoke_test）
 ```
 
 ---
