@@ -114,6 +114,8 @@ KB_GROUPS = [
              "训练期植入错误关联或触发式后门，验证集难以发现。"),
             ("mod-embed", "向量与嵌入弱点", "Vector & Embedding Weaknesses",
              "RAG 索引污染、跨租户检索泄露与嵌入反演。"),
+            ("mod-watermark", "对抗水印攻击", "Adversarial Watermark Attacks",
+             "水印的窃取、去除与伪造：为何溯源线索不等于判定证据（只介绍，不设靶场）。"),
         ],
     ),
     (
@@ -203,7 +205,7 @@ KB_GROUPS = [
         "把知识库落到具体对象上：以本 Agent 实例为例，完成一次可取证、可复评的安全自评。",
         [
             ("case-arena", "可动手靶场：设计与使用", "Hands-on Arena: Design and Use",
-             "十关三难度的可动手靶场：flag 判定、low/medium/high 分级、源码对照。"),
+             "18 关三难度的可动手靶场：flag 判定、low/medium/high 分级、源码对照。"),
             ("case-cross", "案例：跨会话数据读取实测", "Case: Cross-Session Data Read",
              "实测确认沙箱只强制写入边界：工作区外读取成功，写入被拒。"),
             ("case-prompt", "案例：对真实系统提示词的注入测试", "Injection Test Against This Agent's Prompt",

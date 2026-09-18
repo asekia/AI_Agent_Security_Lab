@@ -193,16 +193,21 @@ python run_web.py
 #    http://127.0.0.1:5000
 ```
 
-> ⚠️ **安全**：Web 服务器**仅绑定 127.0.0.1**，绝不暴露到网络。所有资源均为本地（无外部 CDN）。真实 LLM 模式仅在 `/settings` 中显式开启时才会发起网络调用，且 API key 仅保存在进程内存（`os.environ`），**绝不写入磁盘**。
+> ⚠️ **安全**：Web 服务器**仅绑定 127.0.0.1**，绝不暴露到网络。所有资源均为本地（无外部 CDN）。真实 LLM 模式仅在 `/settings` 中显式开启时才会发起网络调用。
+> API key 默认只在进程内存；只有勾选"记住 key"才会明文写入 `lab/llm.json`（已 gitignore），可随时用"清除已保存的 key"移除。
 
 Web 界面页面：
 - `/` 仪表盘：ASI01-ASI10 映射表 + 组件状态 + 快捷入口
+- `/arena` **可动手靶场**：18 个关卡（ASI01–ASI10 + MCP / A2A / 向量库 / 模型文件 / 多模态 / 护栏 / 推理服务 / 自治），每关 low / medium / high 三档，提交攻击载荷判定通关并发放 flag
 - `/asi/<id>` 单个演示页（asi01 / asi02 / asi06 / asi07 / asi09）：运行并查看工具调用轨迹
 - `/agent` **Agent 框架页**：场景选择（当前仅 ASI01 接入）+ mock/真实后端切换 + 防御变体开关 + 推理轨迹与劫持裁决
+- `/asi01/chat` ASI01 对话：与真实模型多轮对话，观察真实注入行为
 - `/playground` 游乐场：自定义提示词 + 单/多 Agent 模式 + 揭示隐藏注入载荷
+- `/kb` 知识库：53 篇攻防文档（按分组浏览）
+- `/selfaudit` 自评：以本机 Agent 实例为对象的一键自评
 - `/trace` 最近一次运行的完整轨迹
 - `/log` 攻击历史（持久化到 `lab/web/run_log.jsonl`）
-- `/settings` 切换 mock / 真实 LLM 模式
+- `/settings` mock / 真实 LLM 模式切换与 key 管理
 
 ---
 
@@ -229,6 +234,14 @@ langgraph-vuln-lab/
 │   │   ├── agent.py          #    create_react_agent 封装 + 轨迹提取
 │   │   ├── defenses.py       #    输入净化 + 指令边界（ASI01 对照）
 │   │   └── registry.py       #    场景注册表（ASI01 wired，ASI02-10 stub）
+│   ├── arena.py              # ★ 靶场核心：18 关 spec、4 阶段判定、三档难度
+│   ├── flags.py              # ★ flag 签发与校验（HMAC-SHA256，key 见 .flagkey）
+│   ├── kb_map.py             # ★ 知识库分组与文档权威来源（/kb 侧栏）
+│   ├── levels.py             # 难度档位定义
+│   ├── asi_map.py            # ASI01–ASI10 与组件的映射表
+│   ├── selfaudit.py          # 自评：以本机 Agent 实例为对象
+│   ├── llmconf.py            # LLM 配置本机持久化（key 默认不落盘）
+│   ├── solves.py             # 通关记录
 │   ├── outbox.jsonl          # 本地邮件外发记录（运行时生成）
 │   ├── memory_store.json     # 记忆存储（运行时生成）
 │   └── state/                # 检查点数据库（运行时生成）
@@ -259,6 +272,7 @@ langgraph-vuln-lab/
 │   ├── templates/            # 页面模板（含 agent.html / principle.html）
 │   └── static/style.css      # 本地样式
 ├── docs/
+│   ├── kb/                   # 知识库 53 篇（基础/注入/混淆/越狱/模型/上下文/智能体/协议/基础设施/防御/案例）
 │   ├── asi01-principle.md    # ★ ASI01 原理与防护文档（成因/攻击链/纵深防御）
 │   ├── asi02-principle.md    # ★ ASI02-ASI10 原理与防护文档（写法与 ASI01 一致）
 │   ├── asi03-principle.md
@@ -269,7 +283,7 @@ langgraph-vuln-lab/
 │   ├── asi08-principle.md
 │   ├── asi09-principle.md
 │   └── asi10-principle.md
-└── tests/                    # 单元测试（可选）
+└── test_arena.py             # 靶场测试（158 项，另见 test_web / test_llm / smoke_test）
 ```
 
 ---
