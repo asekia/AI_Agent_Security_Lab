@@ -6,6 +6,7 @@
 模块
     kgw.py     水印与检测内核（KGW 绿名单，PRF + z 检验）
     attack.py  窃取 / 伪造 / 清洗三类攻击
+    defend.py  防御侧实测（限流 / 轮换 / 扰动，含代价与边界）
     lab.py     实验编排与指标（TPR@FPR 校准、对照矩阵）
 
 用法
@@ -15,4 +16,4 @@
 """
 from __future__ import annotations
 
-__all__ = ["kgw", "attack", "lab"]
+__all__ = ["kgw", "attack", "defend", "lab"]
