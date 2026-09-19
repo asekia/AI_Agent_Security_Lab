@@ -238,12 +238,106 @@
   <tr><td>指标与编排</td><td><code>lab/watermark/lab.py</code></td>
       <td><code>setup</code> 统一备料；<code>run</code> / <code>sweep</code> / <code>lencur</code> 三种跑法复用同一阈值</td></tr>
   <tr><td>回归测试</td><td><code>test_watermark.py</code></td>
-      <td>43 项，分四层：仪器检查 → 攻击有效性 → 公平对照 → 编排层</td></tr>
+      <td>分五层：仪器检查 → 攻击有效性 → 公平对照 → 编排层 → 防御层</td></tr>
 </table>
 <p class="muted">
   关键设计：<b>朴素改写与增强清洗使用同一批位置、同一改写预算</b>
   （<code>attack.pick_pos</code> 选定，两者共用）。否则测出来的差异来自"改了多少"
   而不是"知不知道绿名单" —— 本实验早期版本正是栽在这里，结论完全反了。
+</p>
+
+<h2>8. 防御实测：三条防线，逐条测量（含代价）</h2>
+<p class="muted">
+  "怎么对抗"不能停在清单上。下面三条防线全部是<b>实测</b>结果
+  （<code>lab/watermark/defend.py</code>），每条同时报代价与边界 —— 防御不是免费的。
+</p>
+
+<h3>8.1 限流：预算 → 攻击能力曲线</h3>
+<p class="muted">
+  攻击者拿到的<b>每上下文查询次数</b>决定了窃取质量。只报规则精度会漏掉要害，
+  所以同时给出<b>伪造检出率</b> —— 限流到底防住了什么，直接量出来。
+</p>
+<table class="asi-table">
+  <tr>
+    <th style="width:16%;">每上下文查询</th><th style="width:14%;">总查询</th>
+    <th style="width:12%;">规则 P</th><th style="width:12%;">规则 R</th>
+    <th style="width:16%;">伪造 TPR</th><th>读法</th>
+  </tr>
+  {% for row in dfd.budget.rows %}
+  <tr>
+    <td>{{ row.n_query }}</td>
+    <td>{{ row.queries }}</td>
+    <td>{{ '%.2f' % row.precision }}</td>
+    <td>{{ '%.2f' % row.recall }}</td>
+    <td><b>{{ '%.2f' % row.spoof_tpr }}</b></td>
+    <td class="muted">
+      {% if row.spoof_tpr < 0.5 %}
+        伪造多数不再被检出（z 均值 {{ '%.2f' % row.spoof_z }}，低于阈值 {{ '%.2f' % dfd.budget.threshold }}）
+      {% elif row.n_query == 40 %}
+        完整窃取：伪造最强档，清洗也最强档
+      {% else %}
+        注意：这里伪造反而更强 —— 见下方的反直觉发现
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">
+  两个实测读法：<b>[a]</b> 限流削的是 recall（0.69 → 0.10），precision 几乎不动 ——
+  攻击者的规则不会"变错"，只是"变少"；受影响最大的是依赖高 recall 的<b>清洗</b>。
+  <b>[b]</b> 曲线<b>非单调</b>：中等预算（每上下文 10–20 次）时伪造检出率反而最高，
+  甚至超过完整窃取 —— 稀疏的高置信子集把偏置集中在最可信的绿 token 上，
+  比摊到全部 token（含低置信尾巴）更有效。因此<b>限流不能指望把伪造打到零</b>；
+  把伪造打回零的是下面这条。
+</p>
+
+<h3>8.2 密钥轮换：把伪造打回零的手段</h3>
+<table class="asi-table">
+  <tr><th style="width:30%;">检测方式</th><th style="width:14%;">TPR</th><th>解释</th></tr>
+  <tr>
+    <td>伪造文本 × 旧密钥检测</td>
+    <td><b>{{ '%.2f' % dfd.rotate.old.tpr }}</b>（z={{ '%.2f' % dfd.rotate.old.z_mean }}）</td>
+    <td class="muted">规则匹配旧密钥绿名单 → 栽赃成功</td>
+  </tr>
+  <tr>
+    <td>伪造文本 × 新密钥检测</td>
+    <td><b>{{ '%.2f' % dfd.rotate.new.tpr }}</b>（z={{ '%.2f' % dfd.rotate.new.z_mean }}）</td>
+    <td class="muted">新密钥的绿名单是另一个随机子集，偷来的规则失去指向 → 掉回 FPR 水平</td>
+  </tr>
+</table>
+<p class="muted">
+  轮换是三条里<b>唯一把伪造打到零</b>的手段。代价：旧文本仍需可验证
+  （要保留密钥纪元表，按时间查）；攻击者每遇到一次轮换就要重新花
+  {{ dfd.rotate.queries_per_rotation }} 次查询 —— <b>轮换频率直接换算成攻击成本</b>，
+  这是轮换的真正价值。
+</p>
+
+<h3>8.3 重复查询扰动：温度爬升 → 信号变弱</h3>
+<table class="asi-table">
+  <tr>
+    <th style="width:18%;">温度上限</th>
+    <th style="width:14%;">规则 P</th>
+    <th style="width:14%;">规则 R</th>
+    <th style="width:14%;">F1</th>
+    <th>读法</th>
+  </tr>
+  {% for row in dfd.noise.rows %}
+  <tr>
+    <td>{{ row.boost }}</td>
+    <td>{{ '%.2f' % row.precision }}</td>
+    <td>{{ '%.2f' % row.recall }}</td>
+    <td>{{ '%.2f' % row.f1 }}</td>
+    <td class="muted">
+      {% if loop.first %}基线（不做任何扰动）{% else %}recall 持续下降{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+<p class="muted">
+  <b>诚实边界（别过度宣传）</b>：本实验上下文只有 {{ r.config.vocab }} 个，攻击者"轮不动"上下文，
+  所以扰动的作用是<b>有利估计</b> —— 真实 LLM 上下文空间巨大，攻击者可轮换上下文规避
+  "重复"判定；且温度爬升只对重复上下文生效。另外本页只测了规则质量，
+  正常用户的文本质量代价未测。扰动是<b>辅助手段</b>，不是主防线。
 </p>
 
 <p class="muted" style="margin-top:24px;">

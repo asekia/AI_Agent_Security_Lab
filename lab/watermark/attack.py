@@ -28,7 +28,7 @@ DELTA = 2.0  # 服务端偏置强度；攻击者不知道这个值，只观察�
 
 
 def steal(m: kgw.Model, n_query: int, key: bytes, gamma: float = 0.25,
-          ctxw: int = 1, seed: int = 7) -> dict:
+          ctxw: int = 1, seed: int = 7, temp_fn=None) -> dict:
     """窃取近似绿名单。
 
     原理（攻击的关键）:
@@ -41,6 +41,11 @@ def steal(m: kgw.Model, n_query: int, key: bytes, gamma: float = 0.25,
         因此"对完整绿名单的覆盖率"有天花板；真正决定清洗效果的是
         **对实际输出里绿 token 的识别率** —— 见 eval_rules()。
 
+    参数:
+        temp_fn: 服务端对第 q 次重复查询施加的采样温度（防御实验用，
+                 见 defend.noise）。None 表示服务端不做任何扰动。
+                 攻击者看到的只是"输出变随机了"，看不到这是防御。
+
     返回:
         rules（近似绿名单）、coverage、queries 等。
     """
@@ -51,10 +56,13 @@ def steal(m: kgw.Model, n_query: int, key: bytes, gamma: float = 0.25,
     for last in range(kgw.V):
         ctx = (last,)
         hits: dict[int, int] = {}
-        for _ in range(n_query):
+        for q in range(n_query):
             lg = m.logits(last)
             for i in kgw.green(key, ctx, gamma):
                 lg[i] += DELTA
+            t = temp_fn(q) if temp_fn else 1.0
+            if t != 1.0:
+                lg = [x / t for x in lg]
             nxt = kgw.draw(kgw.softmax(lg), rng)
             hits[nxt] = hits.get(nxt, 0) + 1
         top = sorted(hits.items(), key=lambda kv: (-kv[1], kv[0]))[:k]

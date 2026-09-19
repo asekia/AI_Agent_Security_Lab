@@ -80,6 +80,9 @@ RUN_LOG = os.path.join(ROOT, "lab", "web", "run_log.jsonl")
 
 app = Flask(__name__)
 
+# /watermark 整页结果缓存（确定性计算，同参数同结果；上限 8 份防膨胀）。
+_WM_PAGE_CACHE: dict = {}
+
 # 当前任务状态：保存这一次任务从用户输入到结束的完整事件历史。
 # 新任务开始后整体替换，任务内部不会只保留最后一个工具调用。
 _current_task_run: dict = {}
@@ -353,6 +356,7 @@ def watermark_page():
     参数可调，便于横向比较不同配置下的水印强度。
     """
     from lab.watermark import lab as wmlab
+    from lab.watermark import defend
 
     try:
         reps = max(2, min(20, int(request.args.get("reps", 8))))
@@ -371,16 +375,29 @@ def watermark_page():
     except ValueError:
         gamma = 0.25
 
+    # 整页计算是确定性的（同参数必同结果），按参数记忆化。
+    # 冷启动约 20s（校准+窃取+三条防御），缓存后毫秒级。
+    ck = ("wm", reps, n, nq, round(gamma, 4))
+    cached = _WM_PAGE_CACHE.get(ck)
+    if cached is not None:
+        return cached
+
     res = wmlab.run(reps=reps, n=n, n_query=nq, gamma=gamma)
-    return render_template(
+    html = render_template(
         "watermark.html",
         r=res,
         sweep=wmlab.sweep(reps=max(2, reps // 2), n=n, n_query=nq, gamma=gamma),
         lencur=wmlab.lencur(reps=max(2, reps // 2), n=400, n_query=nq,
                             gamma=gamma),
+        dfd=defend.allthree(reps=max(4, reps), n=n, n_query=nq, gamma=gamma,
+                            boosts=(1.0, 2.0, 5.0)),
         doc=kb_map.kbdoc("mod-watermark"),
         qs={"reps": reps, "n": n, "nq": nq, "gamma": gamma},
     )
+    if len(_WM_PAGE_CACHE) >= 8:
+        _WM_PAGE_CACHE.clear()
+    _WM_PAGE_CACHE[ck] = html
+    return html
 
 
 @app.route("/arena")

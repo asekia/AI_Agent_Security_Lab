@@ -191,7 +191,10 @@ python -c "from lab.watermark import lab; r=lab.run(reps=12, n=200); print(r['wa
 # 改写预算扫描：同等预算下，朴素改写 vs 增强清洗
 python -c "from lab.watermark import lab; [print('%.0f%% naive=%.2f scrub=%.2f' % (x['frac']*100, x['naive']['tpr'], x['scrub']['tpr'])) for x in lab.sweep()['rows']]"
 
-# 回归测试（55 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层）
+# 防御实测：限流 / 密钥轮换 / 输出扰动对窃取与伪造的真实数字
+python -c "from lab.watermark import defend; import json; print(json.dumps(defend.allthree(reps=24, n=200, n_query=40), ensure_ascii=False, default=str))"
+
+# 回归测试（75 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层 / 防御与边界）
 python test_watermark.py
 ```
 
@@ -224,7 +227,7 @@ Web 界面页面：
 - `/playground` 游乐场：自定义提示词 + 单/多 Agent 模式 + 揭示隐藏注入载荷
 - `/kb` 知识库：53 篇攻防文档（按分组浏览）
 - `/selfaudit` 自评：以本机 Agent 实例为对象的一键自评
-- `/watermark` **水印对抗实验**：跑真实的水印 → 窃取 → 伪造 → 清洗全链条，输出对照矩阵与预算扫描曲线（测量页，不发 flag）
+- `/watermark` **水印对抗实验**：跑真实的水印 → 窃取 → 伪造 → 清洗全链条，输出对照矩阵、预算扫描曲线与防御实测（限流/轮换/扰动）（测量页，不发 flag）
 - `/trace` 最近一次运行的完整轨迹
 - `/log` 攻击历史（持久化到 `lab/web/run_log.jsonl`）
 - `/settings` mock / 真实 LLM 模式切换与 key 管理
@@ -265,6 +268,7 @@ langgraph-vuln-lab/
 │   ├── watermark/            # ★ 水印对抗实验样本（测量制，不发 flag）
 │   │   ├── kgw.py            #    KGW 绿名单水印内核（PRF + z 检验）
 │   │   ├── attack.py         #    窃取 / 伪造 / 清洗 / 对照组
+│   │   ├── defend.py         #    防御实测：限流 / 密钥轮换 / 输出扰动
 │   │   └── lab.py            #    指标与编排（run / sweep / lencur）
 │   ├── outbox.jsonl          # 本地邮件外发记录（运行时生成）
 │   ├── memory_store.json     # 记忆存储（运行时生成）

@@ -46,6 +46,12 @@ from lab.watermark import attack, kgw
 
 DEFAULT_KEY = b"lab-watermark-demo-key"
 
+# 校准/留出集是确定性纯函数（同参数必同结果），记忆化是安全的。
+# 同一页面的 run / sweep / lencur / defend 共用同一批校准，
+# 不加缓存就会把同一场计算重跑 3–5 遍（Web 页实测 30s → 数秒）。
+_CACHE: dict = {}
+_CACHE_MAX = 64
+
 
 def calib(m: kgw.Model, key: bytes, n: int, reps: int = 40,
           gamma: float = 0.25, ctxw: int = 1, seed0: int = 100,
@@ -64,6 +70,10 @@ def calib(m: kgw.Model, key: bytes, n: int, reps: int = 40,
     返回值中的 thr_<fpr> 是**阈值**；经验误报率由 holdout() 在留出集上实测。
     """
     need = max(reps, int(round(1.0 / max(fpr, 1e-6))) + 1)
+    ck = ("calib", getattr(m, "seed", None), bytes(key), n, need,
+          gamma, ctxw, seed0, fpr)
+    if ck in _CACHE:
+        return dict(_CACHE[ck])
     zs = []
     for r in range(need):
         ids = kgw.gen(m, b"", n, delta=0.0, ctxw=ctxw, seed=seed0 + r)
@@ -75,6 +85,9 @@ def calib(m: kgw.Model, key: bytes, n: int, reps: int = 40,
     for f in (0.1, 0.05, 0.01, 0.001):
         i = max(0, min(len(zs) - 1, int(round((1.0 - f) * len(zs))) - 1))
         out["thr_%s" % f] = zs[i]
+    if len(_CACHE) >= _CACHE_MAX:
+        _CACHE.clear()
+    _CACHE[ck] = dict(out)
     return out
 
 
@@ -88,12 +101,20 @@ def holdout(m: kgw.Model, key: bytes, thr: float, n: int, reps: int = 60,
         "FPR 受控"只是自述而非证据。
     """
     zs = []
+    ck = ("holdout", getattr(m, "seed", None), bytes(key), thr, n, reps,
+          gamma, ctxw, seed0)
+    if ck in _CACHE:
+        return dict(_CACHE[ck])
     for r in range(reps):
         ids = kgw.gen(m, b"", n, delta=0.0, ctxw=ctxw, seed=seed0 + r)
         zs.append(kgw.detect(ids, key, gamma, ctxw)["z"])
     hits = sum(1 for z in zs if z > thr)
-    return {"fpr_emp": hits / len(zs) if zs else 0.0, "n": len(zs),
-            "hits": hits, "z_max": max(zs) if zs else 0.0}
+    out = {"fpr_emp": hits / len(zs) if zs else 0.0, "n": len(zs),
+           "hits": hits, "z_max": max(zs) if zs else 0.0}
+    if len(_CACHE) >= _CACHE_MAX:
+        _CACHE.clear()
+    _CACHE[ck] = dict(out)
+    return out
 
 
 def tpr(samples: list[list[int]], key: bytes, thr: float,

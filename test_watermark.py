@@ -236,6 +236,90 @@ chk("阴性 FPR 在各长度均受控（≤10%）",
     all(row["false_pos"] <= 0.10 for row in lc["rows"]),
     str([row["false_pos"] for row in lc["rows"]]))
 
+# ============================================================
+print()
+print("[E] 防御层（限流 / 轮换 / 扰动，含代价）")
+print("=" * 74)
+from lab.watermark import defend  # noqa: E402
+
+d = defend.allthree(reps=8, n=120, n_query=20,
+                    queries=(2, 5, 20), boosts=(1.0, 2.0, 5.0))
+
+# --- [1] 限流：预算削 recall，且伪造能力随预算可见地变化 ---
+b = d["budget"]
+chk("预算行完整（含规则质量与伪造 TPR）", all(
+    all(k in r for k in ("n_query", "queries", "precision", "recall",
+                         "spoof_tpr", "spoof_z")) for r in b["rows"]))
+lo, hi = b["rows"][0], b["rows"][-1]
+chk("限流削 recall：最松预算的 recall 高于最紧预算",
+    hi["recall"] > lo["recall"],
+    "nq%d R=%.2f vs nq%d R=%.2f" % (lo["n_query"], lo["recall"],
+                                    hi["n_query"], hi["recall"]))
+chk("限流几乎不动 precision（规则不会变错，只会变少）",
+    abs(hi["precision"] - lo["precision"]) < 0.15,
+    "P: %.2f vs %.2f" % (lo["precision"], hi["precision"]))
+chk("最紧预算下伪造 z 低于阈值（限流到极紧时，伪造多数逃逸）",
+    lo["spoof_z"] < b["threshold"],
+    "z=%.2f thr=%.2f" % (lo["spoof_z"], b["threshold"]))
+# 完整窃取 ≫ 极紧限流，在与文档一致的档（n=200, reps=24）下量 ——
+# reps=8 时 z 均值噪声与效应同量级，会把这个结论测丢（实测 gap 0.65 vs 1.82）
+b200 = defend.budget(m, KEY, queries=(2, 40), reps=24, n=200)
+gap = b200["rows"][1]["spoof_z"] - b200["rows"][0]["spoof_z"]
+chk("完整窃取的伪造 z 显著高于极紧限流（z 差 ≥1）",
+    gap >= 1.0, "nq2 z=%.2f nq40 z=%.2f gap=%.2f"
+    % (b200["rows"][0]["spoof_z"], b200["rows"][1]["spoof_z"], gap))
+# 伪造 TPR 与总查询数必须单调对应（同 reps 粒度才可比）
+
+# --- [2] 轮换：唯一把伪造打到零的手段 ---
+ro = d["rotate"]
+chk("轮换后伪造检出率骤降（旧 >> 新）",
+    ro["old"]["tpr"] >= ro["new"]["tpr"] + 0.5,
+    "old=%.2f new=%.2f" % (ro["old"]["tpr"], ro["new"]["tpr"]))
+chk("新密钥下伪造 z 掉回阈值以下（失去指向）",
+    ro["new"]["z_mean"] < ro["new"]["threshold"],
+    "z=%.2f thr=%.2f" % (ro["new"]["z_mean"], ro["new"]["threshold"]))
+chk("轮换成本 = 一次完整窃取",
+    ro["queries_per_rotation"] == ro["steal"]["queries"],
+    "%s" % ro["queries_per_rotation"])
+chk("新密钥对干净文本 FPR 仍受控（轮换没有引入误报）",
+    ro["new"]["fpr_emp"] <= 0.10, "fpr=%.3f" % ro["new"]["fpr_emp"])
+
+# --- [3] 扰动：boost 越大规则质量越低（单调不增）---
+nz = d["noise"]
+rec = [r["recall"] for r in nz["rows"]]
+chk("扰动单调降低规则 recall",
+    all(rec[i] >= rec[i + 1] - 0.02 for i in range(len(rec) - 1)),
+    str(rec))
+chk("扰动不改变 precision（只压频次信号，不引入假绿）",
+    all(abs(r["precision"] - nz["rows"][0]["precision"]) < 0.15
+        for r in nz["rows"]),
+    str([r["precision"] for r in nz["rows"]]))
+
+# --- 整页确定性缓存 ---
+import web.app as wa  # noqa: E402
+c = wa.app.test_client()
+r1 = c.get("/watermark?reps=2&n=60&nq=5")
+r2 = c.get("/watermark?reps=2&n=60&nq=5")   # clamped 到同一参数
+chk("页面缓存命中（同参数同字节）", r1.data == c.get("/watermark?reps=2&n=60&nq=5").data)
+for q in ("/watermark?reps=999", "/watermark?reps=abc",
+          "/watermark?n=99999", "/watermark?gamma=zzz"):
+    chk("边界参数 %s 不 500" % q,
+        c.get(q).status_code == 200, q)
+
+# --- 边界（用户的约束：水印不设 flag 关卡，样本只是测量工具）---
+from lab import arena  # noqa: E402
+from lab import kb_map  # noqa: E402
+
+chk("靶场无水印关卡（水印不进 flag 制）",
+    not any("wm" in cid.lower() for cid in arena.CHALLENGES),
+    "关卡数=%d" % len(arena.CHALLENGES))
+chk("靶场关卡数量未变", len(arena.CHALLENGES) == 18,
+    str(len(arena.CHALLENGES)))
+chk("页面声明不发 flag（测量制边界）",
+    "不发 flag" in r1.data.decode("utf-8"))
+chk("KB 条目描述声明不发 flag",
+    "不发 flag" in kb_map.kbdoc("mod-watermark")["desc"])
+
 print()
 print("=" * 74)
 print("结果: %d 通过, %d 失败" % (PASS, FAIL))
