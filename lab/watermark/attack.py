@@ -53,11 +53,18 @@ def steal(m: kgw.Model, n_query: int, key: bytes, gamma: float = 0.25,
     approx: dict[tuple[int, ...], frozenset[int]] = {}
     k = max(1, int(gamma * kgw.V))
 
-    for last in range(kgw.V):
-        ctx = (last,)
+    # ctxw=0（单表变体）: 绿名单与上下文无关，攻击者只需探测**一个**上下文，
+    # 学到的表对全部位置生效。这就是方案选择直接换算成攻击成本的地方：
+    # 查询数从 n_query*V 坍缩到 n_query（本仓库 V=148，148 倍差）。
+    if ctxw == 0:
+        ctxs: list[tuple[int, ...]] = [()]
+    else:
+        ctxs = [(last,) for last in range(kgw.V)]
+
+    for ctx in ctxs:
         hits: dict[int, int] = {}
         for q in range(n_query):
-            lg = m.logits(last)
+            lg = m.logits(ctx[-1]) if ctx else m.logits(0)
             for i in kgw.green(key, ctx, gamma):
                 lg[i] += DELTA
             t = temp_fn(q) if temp_fn else 1.0
@@ -97,10 +104,10 @@ def eval_rules(rules: dict, texts: list[list[int]], key: bytes,
     """
     tp = fp = fn = tn = 0
     for ids in texts:
-        for i in range(ctxw, len(ids)):
-            ctx = tuple(ids[i - ctxw:i])
+        for i in range(ctxw, len(ids)) if ctxw else range(len(ids)):
+            ctx = tuple(ids[i - ctxw:i]) if ctxw else ()
             truth = ids[i] in kgw.green(key, ctx, gamma)
-            g = rules.get(ctx) or rules.get((ctx[-1],))
+            g = rules.get(ctx) or (rules.get((ctx[-1],)) if ctx else None)
             pred = bool(g) and ids[i] in g
             if truth and pred:
                 tp += 1
@@ -155,8 +162,9 @@ def scrub(m: kgw.Model, ids: list[int], rules: dict, pos: list[int],
     rng = random.Random(seed)
     out = list(ids)
     for i in pos:
-        ctx = tuple(out[max(0, i - ctxw):i])
-        g = rules.get(ctx) or rules.get((ctx[-1],)) or frozenset()
+        ctx = tuple(out[max(0, i - ctxw):i]) if ctxw else ()
+        g = rules.get(ctx) or (rules.get((ctx[-1],)) if ctx else None) \
+            or frozenset()
         probs = kgw.softmax(m.logits(out[i - 1]))
         for _ in range(60):
             cand = kgw.draw(probs, rng)
@@ -176,9 +184,9 @@ def spoof(m: kgw.Model, rules: dict, n: int, ctxw: int = 1,
     rng = random.Random(seed)
     out = [kgw.IDX["the"]]
     while len(out) < n:
-        ctx = tuple(out[-ctxw:])
-        lg = m.logits(ctx[-1])
-        g = rules.get(ctx) or rules.get((ctx[-1],))
+        ctx = tuple(out[-ctxw:]) if ctxw else ()
+        lg = m.logits(ctx[-1]) if ctxw else m.logits(out[-1])
+        g = rules.get(ctx) or (rules.get((ctx[-1],)) if ctx else None)
         if g:
             for i in g:
                 lg[i] += DELTA

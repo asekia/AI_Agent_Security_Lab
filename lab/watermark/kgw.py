@@ -118,13 +118,17 @@ def gen(m: Model, key: bytes, n: int, gamma: float = 0.25,
 
     参数:
         ctxw: 上下文宽度（1 = bigram，2 = trigram，更贴合 SelfHash）。
+              **0 = 无上下文依赖**（Kirchenbauer 单表变体 / Zhao 等）：
+              绿名单只由 key 决定，任何位置共用同一张表。
+              这是一档真实的部署选择，安全性质完全不同（见文档 4.2.5）：
+              攻击成本坍缩到 n_query 次，清洗却在每个位置都有效。
         prompt: 起始 token 序列；缺省用固定起点。
     """
     rng = random.Random(seed)
     out = list(prompt) if prompt else [IDX["the"]]
     while len(out) < n:
-        ctx = tuple(out[-ctxw:])
-        lg = m.logits(ctx[-1])
+        ctx = tuple(out[-ctxw:]) if ctxw else ()
+        lg = m.logits(ctx[-1]) if ctxw else m.logits(out[-1])
         if delta:
             g = green(key, ctx, gamma)
             for i in g:
@@ -144,18 +148,23 @@ def detect(ids: list[int], key: bytes, gamma: float = 0.25,
     统计量: z = (green - gamma*T) / sqrt(gamma*(1-gamma)*T)
     p 值  : 单侧正态近似 p = 0.5 * erfc(z / sqrt(2))
 
+    ctxw=0（单表变体）: 绿名单只由 key 决定，对所有位置计分。
+        去重改为按 token 去重（生成侧会重复命中同一绿 token，
+        不去重会让重复片段虚增样本量 —— 与 ctxw>=1 的去重哲学一致）。
+
     ignore_repeat=True 时每个唯一上下文只计一次（对齐官方
     ignore_repeated_ngrams，避免重复片段虚增样本量）。
     """
-    seen: set[tuple[int, ...]] = set()
+    seen: set = set()
     g_cnt = 0
     t_cnt = 0
-    for i in range(ctxw, len(ids)):
-        ctx = tuple(ids[i - ctxw:i])
+    for i in range(ctxw, len(ids)) if ctxw else range(len(ids)):
+        ctx = tuple(ids[i - ctxw:i]) if ctxw else ()
+        dkey = ctx if ctxw else ids[i]
         if ignore_repeat:
-            if ctx in seen:
+            if dkey in seen:
                 continue
-            seen.add(ctx)
+            seen.add(dkey)
         t_cnt += 1
         if ids[i] in green(key, ctx, gamma):
             g_cnt += 1

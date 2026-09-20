@@ -273,3 +273,25 @@ def lencur(lengths=(5, 10, 15, 20, 30, 60, 120), reps: int = 8, n: int = 400,
                        "fpr": s["fpr"], "vocab": kgw.V},
             "threshold": thr, "calib": s["calib"], "holdout": s["holdout"],
             "rows": rows, "steal": s["steal"], "rules": s["rules_eval"]}
+
+
+def schemecmp(reps: int = 12, n: int = 200, n_query: int = 40, **kw) -> dict:
+    """方案族对比：上下文依赖的 bigram 表 vs 无上下文的单表（ctxw=0）。
+
+    这是架构"方案层可替换"的证据，也是一条直接的工程结论：
+    **选方案 = 选攻击成本与清洗收益**。
+        单表的窃取成本从 n_query*V 坍缩到 n_query（148 倍差，V=148）；
+        但同一份偷来的表对**全部位置**生效，清洗因此变强。
+        上下文依赖用 V 倍查询成本，换来清洗的"按上下文打折"。
+
+    两个方案共用同一套攻击 / 指标 / 阈值校准 —— 除 ctxw 参数外零改动。
+    """
+    big = run(reps=reps, n=n, n_query=n_query, ctxw=1, **kw)
+    uni = run(reps=reps, n=n, n_query=n_query, ctxw=0, **kw)
+    return {
+        "config": {"reps": reps, "n": n, "n_query": n_query,
+                   "vocab": kgw.V, "fpr": big["config"]["fpr"]},
+        "bigram": big, "unigram": uni,
+        "queries": {"bigram": big["steal"]["queries"],
+                    "unigram": uni["steal"]["queries"]},
+    }

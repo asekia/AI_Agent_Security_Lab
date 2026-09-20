@@ -1,9 +1,12 @@
 """test_watermark.py — 水印对抗样本的正确性测试。
 
-测试分三层，缺一层结论就不可信：
+测试分六层，缺一层结论就不可信：
     [A] 仪器检查：检测器本身有效吗（阳性该高、阴性该低、FPR 受控）
     [B] 攻击有效性：窃取的规则真的比瞎猜好吗（precision/recall 对照随机基线）
     [C] 公平对照：同等预算下增强清洗确实优于朴素改写
+    [D] 编排层：三条跑法可复现吗，边界区测到了吗
+    [E] 防御实测：限流/轮换/扰动的数字可复现，且靶场不进 flag 制
+    [F] 方案族：单表（ctxw=0）经同一攻击栈可测，成本坍缩与清洗失效可复现
 
 [A] 不能跳过：如果检测器自己都不能区分有水印/无水印文本，后面测到的
 "攻击成功"毫无意义 —— 那只是检测器坏了。
@@ -319,6 +322,70 @@ chk("页面声明不发 flag（测量制边界）",
     "不发 flag" in r1.data.decode("utf-8"))
 chk("KB 条目描述声明不发 flag",
     "不发 flag" in kb_map.kbdoc("mod-watermark")["desc"])
+
+# ============================================ [F] 方案族对比（ctxw=0 单表）
+
+print("[F] 方案族对比：上下文依赖 vs 单表（文档 4.2.5）")
+
+wm0 = kgw.gen(m, KEY, 200, ctxw=0, seed=1)
+cl0 = kgw.gen(m, b"", 200, delta=0.0, ctxw=0, seed=1)
+d0 = kgw.detect(wm0, KEY, ctxw=0)
+c0 = kgw.detect(cl0, KEY, ctxw=0)
+chk("单表：水印文本 z 明显为正", d0["z"] > 2.5, "z=%.2f" % d0["z"])
+chk("单表：阴性 z 接近 0", abs(c0["z"]) < 2.0, "z=%.2f" % c0["z"])
+
+cal0 = lab.calib(m, KEY, 200, reps=40, ctxw=0, fpr=0.01)
+thr0 = cal0["thr_0.01"]
+ho0 = lab.holdout(m, KEY, thr0, 200, reps=60, ctxw=0)
+chk("单表：留出集 FPR 受控（同 0.01 目标）", ho0["fpr_emp"] <= 0.05,
+    "fpr=%.3f thr=%.2f" % (ho0["fpr_emp"], thr0))
+t0 = lab.tpr([kgw.gen(m, KEY, 200, ctxw=0, seed=200 + r) for r in range(12)],
+             KEY, thr0, ctxw=0)
+chk("单表：TPR@FPR=0.01 达 1.00", t0["tpr"] == 1.0,
+    "tpr=%.2f z=%.2f" % (t0["tpr"], t0["z_mean"]))
+
+# 窃取成本坍缩：单表只需探测一个上下文
+st0 = attack.steal(m, 40, KEY, ctxw=0)
+chk("单表：窃取只探测一个上下文", st0["contexts"] == 1,
+    str(st0["contexts"]))
+chk("单表：窃取成本 = n_query（对 bigram 的 148 倍坍缩）",
+    st0["queries"] == 40 and kgw.V == 148,
+    "queries=%d V=%d" % (st0["queries"], kgw.V))
+re0 = attack.eval_rules(st0["rules"], [wm0], KEY, ctxw=0)
+chk("单表：40 次起步查询的规则已可用（P ≥ 0.7）",
+    re0["precision"] >= 0.7, "P=%.2f" % re0["precision"])
+
+# 同等总预算（5920）下，单表窃取质量反超 + 伪造满分
+st_eq = attack.steal(m, 5920, KEY, ctxw=0)
+re_eq = attack.eval_rules(st_eq["rules"], [wm0], KEY, ctxw=0)
+chk("单表：同预算窃取 P ≥ 0.8", re_eq["precision"] >= 0.8,
+    "P=%.2f" % re_eq["precision"])
+chk("单表：同预算窃取 R ≥ 0.65", re_eq["recall"] >= 0.65,
+    "R=%.2f" % re_eq["recall"])
+sp0 = [attack.spoof(m, st_eq["rules"], 200, ctxw=0, seed=400 + r)
+       for r in range(8)]
+t_sp0 = lab.tpr(sp0, KEY, thr0, ctxw=0)
+chk("单表：同预算伪造 TPR ≥ 0.8（伪造满分档）",
+    t_sp0["tpr"] >= 0.8, "tpr=%.2f z=%.2f" % (t_sp0["tpr"], t_sp0["z_mean"]))
+
+# 单表清洗失效的机制根因：去重计分 + 绿 id 跨位置存活
+scr0 = attack.scrub(m, wm0, st_eq["rules"],
+                    attack.pick_pos(wm0, 0.3, seed=500), ctxw=0, seed=800)
+d_scr = kgw.detect(scr0, KEY, ctxw=0)
+chk("单表：30% 预算清洗后 z 仍在阈值上（清洗失效）",
+    d_scr["z"] > thr0,
+    "z=%.2f thr=%.2f" % (d_scr["z"], thr0))
+g_all = kgw.green(KEY, (), 0.25)
+surv = len((set(wm0) & g_all) & set(scr0))
+base = len(set(wm0) & g_all)
+chk("单表：去重计分使绿 id ≥90% 跨位置存活（机制证据）",
+    surv >= 0.9 * base, "%d/%d 存活" % (surv, base))
+
+x = lab.schemecmp(reps=4, n=120, n_query=10)
+chk("schemecmp：两方案共用同一攻击栈且成本对比成立",
+    x["queries"]["unigram"] == 10 and x["queries"]["bigram"] == 1480
+    and all(k in x for k in ("bigram", "unigram")),
+    str(x["queries"]))
 
 print()
 print("=" * 74)

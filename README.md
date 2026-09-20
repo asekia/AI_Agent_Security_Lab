@@ -194,7 +194,10 @@ python -c "from lab.watermark import lab; [print('%.0f%% naive=%.2f scrub=%.2f' 
 # 防御实测：限流 / 密钥轮换 / 输出扰动对窃取与伪造的真实数字
 python -c "from lab.watermark import defend; import json; print(json.dumps(defend.allthree(reps=24, n=200, n_query=40), ensure_ascii=False, default=str))"
 
-# 回归测试（75 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层 / 防御与边界）
+# 方案族对比：上下文依赖表 vs 单表（窃取成本差 148 倍，清洗存活率相反）
+python -c "from lab.watermark import lab; d=lab.schemecmp(reps=12, n=200, n_query=40); print(d['queries'], d['bigram']['scrubbed']['tpr'], d['unigram']['scrubbed']['tpr'])"
+
+# 回归测试（88 项：仪器检查 / 攻击有效性 / 公平对照 / 编排层 / 防御与边界 / 方案族）
 python test_watermark.py
 ```
 
@@ -269,7 +272,7 @@ langgraph-vuln-lab/
 │   │   ├── kgw.py            #    KGW 绿名单水印内核（PRF + z 检验）
 │   │   ├── attack.py         #    窃取 / 伪造 / 清洗 / 对照组
 │   │   ├── defend.py         #    防御实测：限流 / 密钥轮换 / 输出扰动
-│   │   └── lab.py            #    指标与编排（run / sweep / lencur）
+│   │   └── lab.py            #    指标与编排（run / sweep / lencur / schemecmp）
 │   ├── outbox.jsonl          # 本地邮件外发记录（运行时生成）
 │   ├── memory_store.json     # 记忆存储（运行时生成）
 │   └── state/                # 检查点数据库（运行时生成）
