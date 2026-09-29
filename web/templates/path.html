@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ p.title }} · 学习路径 · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+<h1>{{ p.title }}<span class="muted"> · {{ p.en }}</span></h1>
+<p class="muted">{{ p.desc }}</p>
+{% if result %}
+  <p class="{{ 'ok' if result.ok else 'error' }}">{{ result.msg }}</p>
+{% endif %}
+
+<table class="asi-table">
+  <tr><th style="width:5%;">#</th><th style="width:8%;">类型</th><th>任务与验证</th><th style="width:10%;">状态</th></tr>
+  {% for u in units %}
+  <tr>
+    <td>{{ loop.index }}</td>
+    <td>{% if u.kind == 'read' %}读{% elif u.kind == 'drill' %}练{% else %}测{% endif %}</td>
+    <td>
+      {% if u.kind == 'read' %}
+        <p style="margin:0 0 6px;">{{ u.task }} →
+          <a href="{{ url_for('kbview', slug=u.slug) }}">打开文档</a></p>
+        <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="hidden" name="uid" value="{{ u.uid }}">
+          <span class="muted" style="align-self:center;">验证：</span>
+          <input type="text" name="answer" placeholder="输入答案"
+                 style="flex:1;min-width:220px;padding:6px 10px;border:1px solid var(--hairline);border-radius:8px;">
+          <button class="btn" type="submit">判定</button>
+        </form>
+      {% elif u.kind == 'drill' %}
+        <p style="margin:0 0 6px;">{{ u.task }}</p>
+        <a class="btn" href="{{ url_for('arena_page', cid=u.cid, level=u.level) }}">进入 {{ u.cid }} · {{ u.level }}</a>
+        <span class="muted" style="margin-left:8px;">flag 签发后此处自动完成</span>
+      {% else %}
+        <p style="margin:0 0 6px;">{{ u.task }}</p>
+        <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="hidden" name="uid" value="{{ u.uid }}">
+          <span class="muted" style="align-self:center;">验证：</span>
+          <input type="text" name="answer" placeholder="输入答案"
+                 style="flex:1;min-width:220px;padding:6px 10px;border:1px solid var(--hairline);border-radius:8px;">
+          <button class="btn" type="submit">判定</button>
+        </form>
+      {% endif %}
+    </td>
+    <td>
+      {% if u.done %}<span class="ok">完成</span>
+      {% elif u.kind == 'drill' %}待通关
+      {% else %}待判定{% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p class="muted" style="margin-top:20px;">
+  卡住了：读单元的答案都在对应文档原文里；练单元卡住先看关卡页的提示与源码对照，再试 medium 的绕过思路。
+</p>
+{% endblock %}

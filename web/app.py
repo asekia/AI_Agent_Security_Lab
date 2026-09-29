@@ -21,6 +21,7 @@ if ROOT not in sys.path:
 from lab import arena  # noqa: E402
 from lab import flags  # noqa: E402
 from lab import kb_map  # noqa: E402
+from lab import learn  # noqa: E402
 from lab import levels  # noqa: E402
 from lab import llmconf  # noqa: E402
 from lab import selfaudit  # noqa: E402
@@ -325,6 +326,36 @@ def kbview(slug: str):
     with open(path, "r", encoding="utf-8") as f:
         body = render_markdown(f.read())
     return render_template("kbdoc.html", doc=doc, body=body)
+
+
+@app.route("/learn")
+def learn_index():
+    """学习路径列表：每条路径的定位与完成进度。"""
+    return render_template("learn.html", paths=learn.allrows())
+
+
+@app.route("/learn/<pid>", methods=["GET", "POST"])
+def learn_path_page(pid: str):
+    """学习路径详情：顺序单元 + 客观判定（答题 / 靶场通关）。"""
+    p = learn.getpath(pid)
+    if not p:
+        return render_template(
+            "learn.html", paths=learn.allrows(), error=f"未知路径: {pid}"
+        ), 404
+
+    result = None
+    if request.method == "POST":
+        uid = (request.form.get("uid") or "").strip()
+        answer = request.form.get("answer") or ""
+        result = learn.submit(pid, uid, answer)
+        result["uid"] = uid
+
+    return render_template(
+        "path.html",
+        p={"pid": p["pid"], "title": p["title"], "en": p["en"], "desc": p["desc"]},
+        units=learn.unitrows(pid),
+        result=result,
+    )
 
 
 @app.route("/selfaudit")

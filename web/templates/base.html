@@ -64,6 +64,12 @@
         <a class="side-link" href="{{ url_for('kbgroup', gid='def') }}"><span class="side-label">防御与评估</span></a>
         <a class="side-link" href="{{ url_for('kbgroup', gid='case') }}"><span class="side-label">案例教材</span></a>
 
+        <div class="side-group">学习路径</div>
+        <a class="side-link" href="{{ url_for('learn_index') }}"><span class="side-label">路径总览</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p1') }}"><span class="side-label">P1 LLM 安全入门</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p2') }}"><span class="side-label">P2 注入与绕过实战</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p3') }}"><span class="side-label">P3 基础设施与防御</span></a>
+
         <div class="side-group">可动手靶场 · {{ arena_count }} 关</div>
         <a class="side-link" href="{{ url_for('arena_index') }}"><span class="side-label">关卡列表</span></a>
         <a class="side-link" href="{{ url_for('arena_page', cid='asi01', level='low') }}"><span class="side-label">ASI01 间接注入</span></a>
