@@ -49,6 +49,23 @@
 本页内容仅用于本地靶场与已授权评估。
 ```
 
+
+### 各产品的枚举端点
+
+| 产品 | 端点 | 返回内容 |
+| --- | --- | --- |
+| Weaviate | `GET /v1/meta` | 服务器版本与已安装模块 |
+| Weaviate | `GET /v1/schema` | 全部类定义：属性名 + 向量化模块配置——`vectorizer` 字段直接说明所用嵌入模型 |
+| Qdrant | `GET /collections` | 全部集合名 |
+| Qdrant | `GET /collections/{name}` | 向量维度、距离度量、总点数 |
+| Chroma | `GET /api/v1/collections` | 旧版本默认无认证直接返回集合列表 |
+
+未认证的 Weaviate 实例更进一步：schema 查询与数据查询全套可用。
+
+### 一个读懂枚举结果的例子
+
+一个名为 `internal-hr-policies` 的集合、768 维、50,000 个点——三条信息足以还原出：该 RAG 系统索引的是内部 HR 政策文档、嵌入模型是 768 维输出（典型如 BERT / sentence-transformers 系）、语料规模约 5 万条。攻击者还没有读到任何一条文档内容，系统画像已经基本成型。
+
 ## 5. 检测与观察点
 
 - 向量库端口是否对外可达，是否启用认证。

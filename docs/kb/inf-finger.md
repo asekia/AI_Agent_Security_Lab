@@ -66,6 +66,71 @@
 本页内容仅用于本地靶场与已授权评估。对非授权目标执行上述步骤属于违法行为。
 ```
 
+
+### 推理端点路径（按框架）
+
+端口之外，路径本身也是指纹：
+
+| 框架 | 端口 | 典型路径 |
+| --- | --- | --- |
+| vLLM | 8000 | `/v1/chat/completions`、`/v1/models` |
+| Ollama | 11434 | `/api/chat`、`/api/generate`、`/v1/chat/completions` |
+| SGLang | 30000 | `/v1/chat/completions`、`/v1/models`、`/health`、`/server_info` |
+| LMDeploy | 23333 | `/v1/chat/completions`、`/v1/models` |
+| Xinference | 9997 | `/v1/chat/completions`、`/v1/models` |
+| llama.cpp server | 8080 | `/v1/chat/completions`、`/completion` |
+| TorchServe | 8080 | `/predictions/{model_name}` |
+| Triton | 8000 HTTP / 8001 gRPC | `/v2/models/{model}/infer`、`/v2/models/{model}/config` |
+| TensorFlow Serving | 8500 gRPC / 8501 HTTP | `/v1/models/{model}/metadata` |
+| Nginx / API 网关 | 443 | 通常转发到 `/v1/chat/completions` |
+
+同时用 HTTP 与 gRPC 的原因：内部服务间传大包走 gRPC 更快，客户端接入走 REST 更方便。
+
+### API 响应指纹
+
+各框架返回的 JSON 结构不同，看响应即可识别对方是谁：
+
+- 与 OpenAI 兼容的端点返回 `{"object": "model", "id": ..., "created": ...}`——看到 `"object": "model"` 即可把候选缩小到 vLLM / Ollama / LiteLLM 及其封装。
+- TensorFlow Serving 返回 `{"model_version_status": [{"version": "1", "state": "AVAILABLE"}]}`。
+- Triton 返回 `{"name": ..., "versions": [...], "platform": "tensorflow_graphdef"}`——`platform` 字段直接说明模型由哪个框架构建。
+- MLflow 的错误堆栈会引用 `mlflow.server` / `mlflow.tracking` 命名空间——连报错都在报身份。
+
+### 错误信息指纹
+
+推理 API 对输入的张量结构与类型有严格要求。故意发送格式错误的请求，从报错里读框架：
+
+- 对期望张量对象的 TensorFlow Serving 发送整数列表，报错包含 `tensorinfo_map`——该词几乎只出现在 TF Serving 的错误里。
+- MLflow 的报错堆栈引用 `mlflow.server` / `mlflow.tracking` / databricks 命名空间；路径遍历类漏洞被触发时还会暴露服务器完整文件系统路径。
+- Databricks Mosaic AI 遇到格式错误的令牌会抛出 Java 异常 `io.jsonwebtoken.IncorrectClaimException`，可直接定位问题组件。
+- Triton 有独门特征：请求头带 `endpoint-load-metrics-format: text` 时，响应头直接返回 CPU / GPU 利用率——看到头部有 GPU 数据即在与 Triton 交互。
+- 这套方法有效的原因：数据科学家开发期需要详细调试信息，框架默认开着详细报错，部署前很少关闭。
+
+### gRPC 反射
+
+对 8001 / 8500 等 gRPC 端口执行 `grpcurl -plaintext <host:port> list`：若服务启用了反射，任何客户端无需 proto 定义即可列出全部服务与方法——等于拿到完整 API 模式。
+
+### 端点命名与词表
+
+传统 REST 用资源命名（`/users`、`/accounts`），AI 端点用计算操作命名，对目录枚举非常友好：
+
+- 推理：`/predict`、`/invocations`（SageMaker 命名惯例）、`/infer`、`/generate`、`/embeddings`、`/score`
+- 模型管理：`/v1/models`、`/v2/models`、`/v2/health/ready`
+- MLflow 内部：`/api/2.0/mlflow/`（该前缀唯一，其他框架没有）
+- Kubeflow 管道：`/pipeline/apis/v1beta1/`
+
+SecLists 等标准字典不包含这些路径——需要自行扩充进 ffuf / feroxbuster 的词表。
+
+### Prometheus 指标 = 被动情报
+
+推理服务器通常在独立端口暴露 `/metrics`（Triton 8002、TorchServe 8082），不碰推理 API 就能读出：
+
+- 当前加载的模型名称与版本
+- 推理请求数与延迟分位数
+- 正在处理的批大小
+- 每模型 GPU 内存占用
+
+部署拓扑、哪些模型承压最重、GPU 资源分布——这些情报在"未调用模型"的情况下就能拿全。
+
 ## 5. 检测与观察点
 
 - 管理端口是否本应对外暴露（多数部署中答案是不应该）。

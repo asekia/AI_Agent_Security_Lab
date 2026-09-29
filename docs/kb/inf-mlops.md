@@ -57,6 +57,78 @@
    → 评估任务提交接口
 ```
 
+
+### MLflow 枚举链（五步）
+
+MLflow 把实验、模型、运行、制品集中在一处并通过干净的 REST API 暴露，是最优先的枚举目标：
+
+```text
+1. 列出全部实验
+   POST /api/2.0/mlflow/experiments/search
+   → 每个实验的名称与内部 ID；实验名常含项目代号与业务目标
+     （如 fraud-detection-v3、rag-embeddings-tuning）
+
+2. 列出已注册模型
+   GET /api/2.0/mlflow/registered-models/list
+   → 全部模型清单：名称、描述、创建时间
+
+3. 提取模型版本
+   GET /api/2.0/mlflow/model-versions/search
+   → source 字段（制品 URI，常指向 s3://internal-ml-models-.../artifacts/）
+   → user_id（创建者）、时间戳、阶段标签
+     （Production / Staging / Archived，可区分生产与测试模型）
+
+4. 搜索训练运行
+   POST /api/2.0/mlflow/runs/search
+   → 超参数、训练指标、自定义标签
+     （团队常用标签存项目代号、Git 提交哈希、部署环境标识）
+
+5. 列出可下载制品
+   GET /api/2.0/mlflow/artifacts/list
+```
+
+五个调用即可把整个 ML 产品线映射完毕——前提是服务可达且未认证。
+
+### 绕过认证的两个口子
+
+- GraphQL 端点 `/graphql`：曾长期可绕过 REST API 的认证层，未认证即可查询 `mlflowSearchRuns`、`mlflowGetRun` 等内部接口，读出用户名、源码路径与项目详情。
+- 调试参数：端点追加 `?debug=true` / `?verbose=1` 会触发原始堆栈——包含文件系统路径、库版本，偶尔还有从环境变量加载失败的硬编码凭据。
+- 认证的历史也要注意：MLflow 2.x 之前默认完全无认证；加入认证功能后又出现过默认凭据问题（见 CVE 速查页 CVE-2026-2635）。
+
+### 其他平台的入口细节
+
+| 平台 | 细节 |
+| --- | --- |
+| Kubeflow | 仪表盘常在不配 OIDC 的情况下经 Kubernetes LoadBalancer / NodePort 直接暴露；未认证用户可创建 Jupyter 笔记本，而笔记本绑定的服务账号具有集群级权限——一条直通容器编排层的路径 |
+| TorchServe | 8081 管理接口允许从任意 URL 动态注册模型；模型加载过程会执行初始化代码——加载恶意 `.mar` 存档即可能 RCE |
+| SageMaker | `DirectInternetAccess: Enabled` 的笔记本实例可接受来自互联网的入站连接 |
+| Jupyter | `GET /api/kernels` 列出运行中内核（名称、ID、最后活跃时间）；`GET /api/contents` 列出笔记本文件。数据科学家常把 MLflow 凭证、云存储密钥、Hugging Face 令牌明文写在单元格——这是从单点服务突破到整个系统的关键跳板 |
+
+### 模型注册表为什么是最有价值的目标
+
+注册表不只是模型文件的仓库，它保存完整的谱系：模型名、版本历史、阶段标签、创建时间、可链接到全部训练元数据的运行 ID、指向内部云存储的制品 URI、每位贡献者的用户 ID。IBM X-Force 记录的利用模式是：从一个 Jupyter 笔记本中找到 MLflow 凭证，随后对注册表做完整枚举并逐个抽走模型制品。注册表是那张"告诉攻击者其他所有数据在哪"的地图。
+
+### 案例研究：IBM X-Force MLOKit 攻击链
+
+IBM X-Force Red 在《Becoming the Trainer: Attacking ML Training Infrastructure》研究（含 TROOPERS 会议演讲与开源工具 MLOKit）中记录了完整链条：
+
+```text
+1. 对一名数据科学家做网络钓鱼 → 进入 Azure ML 环境
+2. 在 Jupyter 笔记本单元格中发现明文 MLflow 凭证
+3. 用 MLOKit 自动化枚举：
+   list-models   枚举已注册模型
+   download-model 提取版本元数据与制品标识
+   —— 与上面的五步链路走同一批 REST API，但对服务器而言全是"正常认证请求"
+4. 顺藤摸瓜：Jupyter → MLflow 跟踪服务器 → 模型注册表 → S3 制品桶
+   三个组件环环相扣，任一被攻破即波及全局
+5. 后续扩展模块：
+   list-notebooks       枚举笔记本
+   add-notebook-trigger 借生命周期配置执行代码
+   poison-model         覆盖模型制品
+```
+
+这次事件的结论不是发现了什么 0day，而是：每个服务都"正常可达"，把它们连起来的凭证就躺在笔记本单元格里。IBM 团队同时发布了针对 Azure ML / SageMaker / MLflow 的检测规则。
+
 ## 5. 检测与观察点
 
 - 平台是否启用了认证，是否存在默认口令。
@@ -86,4 +158,5 @@
 
 - MITRE ATLAS AML.CS0023（ShadowRay）：https://atlas.mitre.org/
 - MITRE ATLAS AML.T0049（Exploit Public-Facing Application）：https://atlas.mitre.org/
+- IBM X-Force: Becoming the Trainer — Attacking ML Training Infrastructure：https://www.ibm.com/
 - 内部培训笔记《llm 安全问题》
