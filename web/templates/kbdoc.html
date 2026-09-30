@@ -5,6 +5,16 @@
   <h1>{{ doc.title }}</h1>
   <p class="muted">{{ doc.en }} · {{ doc.group_zh }}</p>
 </div>
+{% if toc %}
+<div class="card" style="margin-bottom:20px;">
+  <h3>本页内容</h3>
+  <ol class="toc">
+    {% for t in toc %}
+    <li><a href="#{{ t.id }}">{{ t.text }}</a></li>
+    {% endfor %}
+  </ol>
+</div>
+{% endif %}
 <div class="principle-body">
   {{ body | safe }}
 </div>

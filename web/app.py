@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -205,10 +206,10 @@ def inject_counts():
 
 @app.route("/")
 def index():
-    """渲染仪表盘页面（漏洞映射表 + 组件状态 + 快捷入口）。"""
-    from lab.asi_map import asi_rows
+    """渲染仪表盘页面（学习入口 + ASI 主题矩阵 + 组件状态）。"""
+    from lab.asi_map import ASI
+    from lab.runner import DEMOS
 
-    rows = asi_rows()
     # 组件状态
     venv_ok = os.path.exists(os.path.join(ROOT, ".venv", "Scripts", "python.exe"))
     deps_ok = True
@@ -217,9 +218,21 @@ def index():
         import flask  # noqa: F401
     except ImportError:
         deps_ok = False
+    topics = []
+    for n in range(1, 11):
+        tid = f"asi{n:02d}"
+        demo = DEMOS.get(tid, {})
+        topics.append(
+            {
+                "id": tid,
+                "name": ASI[tid.upper()],
+                "desc": demo.get("desc", ""),
+            }
+        )
     return render_template(
         "index.html",
-        asi_rows=rows,
+        topics=topics,
+        learn_paths=learn.allrows(),
         venv_ok=venv_ok,
         deps_ok=deps_ok,
         llm_mode=_llm_config["mode"],
@@ -233,6 +246,97 @@ def asi_page(demo_id: str):
     if not demo:
         return render_template("asi.html", demo=None, error="未知演示 ID"), 404
     return render_template("asi.html", demo=demo, error=None)
+
+
+# 每个主题页 curated 的相关知识库条目（slug 顺序即展示顺序）
+TOPIC_KB = {
+    "asi01": ["inj-direct", "inj-indirect", "def-input"],
+    "asi02": ["agt-agency", "inj-tool", "base-assets"],
+    "asi03": ["agt-agency", "agt-trust", "base-assets"],
+    "asi04": ["base-chain", "prot-mcp", "inf-mlops"],
+    "asi05": ["prot-file", "def-arch", "inf-cve"],
+    "asi06": ["ctx-memory", "ctx-overflow", "mod-embed"],
+    "asi07": ["agt-multi", "prot-a2a", "def-arch"],
+    "asi08": ["agt-multi", "def-arch", "def-test"],
+    "asi09": ["agt-trust", "jail-emotion", "def-test"],
+    "asi10": ["agt-agency", "def-arch", "def-test"],
+}
+
+_H2_RE = re.compile(r"<h2>(.*?)</h2>")
+
+
+def _with_toc(html: str) -> tuple[str, list[dict]]:
+    """给渲染后的 HTML 的 h2 注入锚点 id，返回 (新 HTML, 目录条目)。"""
+    toc: list[dict] = []
+    counter = {"n": 0}
+
+    def _repl(m: re.Match) -> str:
+        counter["n"] += 1
+        sec_id = f"sec-{counter['n']}"
+        toc.append({"id": sec_id, "text": m.group(1)})
+        return f'<h2 id="{sec_id}">{m.group(1)}</h2>'
+
+    return _H2_RE.sub(_repl, html), toc
+
+
+@app.route("/topic/<asi>")
+def topic_page(asi: str):
+    """主题整合页（PortSwigger 式）：概览 → 目录 → 原理全文 → 动手区 → 相关知识。"""
+    from lab.asi_map import ASI
+
+    if asi.upper() not in ASI:
+        return render_template("topic.html", topic=None, error=f"未知主题: {asi}"), 404
+
+    order = [f"asi{n:02d}" for n in range(1, 11)]
+    idx = order.index(asi)
+    prev_id = order[idx - 1] if idx > 0 else None
+    next_id = order[idx + 1] if idx < len(order) - 1 else None
+
+    demo = runner.DEMOS.get(asi, {})
+    ch = arena.achall(asi)
+
+    # 原理文档全文 + 目录
+    doc_path = os.path.join(ROOT, "docs", f"{asi}-principle.md")
+    body, toc = "", []
+    if os.path.exists(doc_path):
+        with open(doc_path, "r", encoding="utf-8") as f:
+            body, toc = _with_toc(render_markdown(f.read()))
+
+    # 相关知识库条目（slug → 元数据）
+    related = []
+    for slug in TOPIC_KB.get(asi, []):
+        d = kb_map.kbdoc(slug)
+        if d:
+            related.append(d)
+
+    def _brief(tid: str) -> dict:
+        d = runner.DEMOS.get(tid, {})
+        return {"id": tid, "name": ASI[tid.upper()]}
+
+    from lab.asi_map import ASI_COMP
+
+    return render_template(
+        "topic.html",
+        topic={
+            "id": asi,
+            "name": ASI[asi.upper()],
+            "num": asi[-2:],
+            "desc": demo.get("desc", ""),
+            "scenario": demo.get("scenario", ""),
+            "component": ASI_COMP.get(asi.upper(), ""),
+        },
+        body=body,
+        toc=toc,
+        related=related,
+        arena={
+            "cid": asi,
+            "title": ch["title"] if ch else asi,
+            "goal": ch["goal"] if ch else "",
+        } if ch else None,
+        prev=_brief(prev_id) if prev_id else None,
+        next=_brief(next_id) if next_id else None,
+        error=None,
+    )
 
 
 @app.route("/playground")
@@ -324,8 +428,8 @@ def kbview(slug: str):
             body=f"<p>文档缺失: {path}</p>",
         ), 404
     with open(path, "r", encoding="utf-8") as f:
-        body = render_markdown(f.read())
-    return render_template("kbdoc.html", doc=doc, body=body)
+        body, toc = _with_toc(render_markdown(f.read()))
+    return render_template("kbdoc.html", doc=doc, body=body, toc=toc)
 
 
 @app.route("/learn")

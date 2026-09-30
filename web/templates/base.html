@@ -38,17 +38,23 @@
         <div class="side-group">总览</div>
         <a class="side-link" href="{{ url_for('index') }}"><span class="side-label">仪表盘</span></a>
 
-        <div class="side-group">原理文档</div>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi01') }}"><span class="side-label">ASI01 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi02') }}"><span class="side-label">ASI02 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi03') }}"><span class="side-label">ASI03 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi04') }}"><span class="side-label">ASI04 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi05') }}"><span class="side-label">ASI05 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi06') }}"><span class="side-label">ASI06 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi07') }}"><span class="side-label">ASI07 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi08') }}"><span class="side-label">ASI08 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi09') }}"><span class="side-label">ASI09 原理</span></a>
-        <a class="side-link" href="{{ url_for('principle_page', doc_id='asi10') }}"><span class="side-label">ASI10 原理</span></a>
+        <div class="side-group">学习路径</div>
+        <a class="side-link" href="{{ url_for('learn_index') }}"><span class="side-label">路径总览</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p1') }}"><span class="side-label">P1 LLM 安全入门</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p2') }}"><span class="side-label">P2 注入与绕过实战</span></a>
+        <a class="side-link" href="{{ url_for('learn_path_page', pid='p3') }}"><span class="side-label">P3 基础设施与防御</span></a>
+
+        <div class="side-group">ASI 主题</div>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi01') }}"><span class="side-label">ASI01 目标劫持</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi02') }}"><span class="side-label">ASI02 工具误用</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi03') }}"><span class="side-label">ASI03 权限滥用</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi04') }}"><span class="side-label">ASI04 供应链</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi05') }}"><span class="side-label">ASI05 代码执行</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi06') }}"><span class="side-label">ASI06 记忆投毒</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi07') }}"><span class="side-label">ASI07 代理间通信</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi08') }}"><span class="side-label">ASI08 级联故障</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi09') }}"><span class="side-label">ASI09 信任滥用</span></a>
+        <a class="side-link" href="{{ url_for('topic_page', asi='asi10') }}"><span class="side-label">ASI10 失控代理</span></a>
 
         <div class="side-group">LLM 安全知识库</div>
         <a class="side-link" href="{{ url_for('kbindex') }}"><span class="side-label">知识库总览</span></a>
@@ -64,35 +70,12 @@
         <a class="side-link" href="{{ url_for('kbgroup', gid='def') }}"><span class="side-label">防御与评估</span></a>
         <a class="side-link" href="{{ url_for('kbgroup', gid='case') }}"><span class="side-label">案例教材</span></a>
 
-        <div class="side-group">学习路径</div>
-        <a class="side-link" href="{{ url_for('learn_index') }}"><span class="side-label">路径总览</span></a>
-        <a class="side-link" href="{{ url_for('learn_path_page', pid='p1') }}"><span class="side-label">P1 LLM 安全入门</span></a>
-        <a class="side-link" href="{{ url_for('learn_path_page', pid='p2') }}"><span class="side-label">P2 注入与绕过实战</span></a>
-        <a class="side-link" href="{{ url_for('learn_path_page', pid='p3') }}"><span class="side-label">P3 基础设施与防御</span></a>
-
         <div class="side-group">可动手靶场 · {{ arena_count }} 关</div>
         <a class="side-link" href="{{ url_for('arena_index') }}"><span class="side-label">关卡列表</span></a>
-        <a class="side-link" href="{{ url_for('arena_page', cid='asi01', level='low') }}"><span class="side-label">ASI01 间接注入</span></a>
-        <a class="side-link" href="{{ url_for('arena_page', cid='mcp01', level='low') }}"><span class="side-label">MCP 工具投毒</span></a>
-        <a class="side-link" href="{{ url_for('arena_page', cid='grd01', level='low') }}"><span class="side-label">护栏编码绕过</span></a>
-
-        <div class="side-group">攻击演示（预制剧本）</div>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi01') }}"><span class="side-label">ASI01 目标劫持</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi02') }}"><span class="side-label">ASI02 工具误用</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi03') }}"><span class="side-label">ASI03 权限滥用</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi04') }}"><span class="side-label">ASI04 供应链</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi05') }}"><span class="side-label">ASI05 代码执行</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi06') }}"><span class="side-label">ASI06 记忆投毒</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi07') }}"><span class="side-label">ASI07 代理间通信</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi08') }}"><span class="side-label">ASI08 级联故障</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi09') }}"><span class="side-label">ASI09 信任滥用</span></a>
-        <a class="side-link" href="{{ url_for('asi_page', demo_id='asi10') }}"><span class="side-label">ASI10 失控代理</span></a>
-
-        <div class="side-group">Agent 框架</div>
-        <a class="side-link" href="{{ url_for('agent_page') }}"><span class="side-label">Agent 框架</span></a>
-        <a class="side-link" href="{{ url_for('asichat') }}"><span class="side-label">ASI01 聊天靶场</span></a>
 
         <div class="side-group">工具</div>
+        <a class="side-link" href="{{ url_for('agent_page') }}"><span class="side-label">Agent 框架</span></a>
+        <a class="side-link" href="{{ url_for('asichat') }}"><span class="side-label">ASI01 聊天靶场</span></a>
         <a class="side-link" href="{{ url_for('watermark_page') }}"><span class="side-label">水印对抗实验</span></a>
         <a class="side-link" href="{{ url_for('playground') }}"><span class="side-label">游乐场</span></a>
         <a class="side-link" href="{{ url_for('selfaudit_page') }}"><span class="side-label">Agent 自评</span></a>

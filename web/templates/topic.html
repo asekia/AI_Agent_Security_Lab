@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} · LangGraph 漏洞靶场{% endblock %}
+{% block content %}
+{% if error %}
+  <h1>未知主题</h1>
+  <p class="error">{{ error }}</p>
+  <a class="btn" href="{{ url_for('index') }}">返回仪表盘</a>
+{% else %}
+<nav class="crumbs">
+  <a href="{{ url_for('index') }}">仪表盘</a> /
+  <a href="{{ url_for('learn_index') }}">学习路径</a> /
+  <span>{{ topic.id }} {{ topic.name }}</span>
+</nav>
+
+<div class="topic-head">
+  <p class="topic-num">ASI{{ topic.num }}</p>
+  <h1>{{ topic.name }}</h1>
+  <p class="lead">{{ topic.desc }}</p>
+</div>
+
+<div class="topic-grid">
+  <aside class="topic-side">
+    <div class="card">
+      <h3>本页内容</h3>
+      <ol class="toc">
+        {% for t in toc %}
+        <li><a href="#{{ t.id }}">{{ t.text }}</a></li>
+        {% endfor %}
+        <li><a href="#hands-on">动手：靶场关卡</a></li>
+        <li><a href="#related">相关知识库</a></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>在本靶场</h3>
+      <ul class="status-list">
+        <li>漏洞场景: <span class="mono">{{ topic.scenario }}</span></li>
+        <li>组件位置: <span class="mono">{{ topic.component }}</span></li>
+        <li>预制演示: <a href="{{ url_for('asi_page', demo_id=topic.id) }}">运行 {{ topic.id }}</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <article class="topic-body">
+    {{ body | safe }}
+
+    <section id="hands-on" class="hands-on">
+      <h2>动手：靶场关卡</h2>
+      <p>
+        读完原理后在靶场亲手打一遍：自己构造载荷，按难度经防御流水线判定，拿到 flag。
+        预制演示只给你看结果，关卡才要求你真的打进去。
+      </p>
+      <div class="card">
+        <h3>{{ arena.title }}</h3>
+        <p><b>通关目标</b>：{{ arena.goal }}</p>
+        <a class="btn primary" href="{{ url_for('arena_page', cid=arena.cid, level='low') }}">进入关卡（low）</a>
+        <a class="btn" href="{{ url_for('arena_page', cid=arena.cid, level='medium') }}">medium</a>
+        <a class="btn" href="{{ url_for('arena_page', cid=arena.cid, level='high') }}">high（验证防御）</a>
+        <a class="btn ghost" href="{{ url_for('asi_page', demo_id=topic.id) }}">先看预制演示</a>
+      </div>
+    </section>
+
+    <section id="related">
+      <h2>相关知识库</h2>
+      <table class="asi-table">
+        <tr><th style="width:34%;">文档</th><th>说明</th></tr>
+        {% for d in related %}
+        <tr>
+          <td><a href="{{ url_for('kbview', slug=d.slug) }}">{{ d.title }}</a></td>
+          <td>{{ d.desc }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </section>
+
+    <nav class="prevnext">
+      {% if prev %}<a class="btn" href="{{ url_for('topic_page', asi=prev.id) }}">← {{ prev.id }} {{ prev.name }}</a>{% endif %}
+      {% if next %}<a class="btn" href="{{ url_for('topic_page', asi=next.id) }}">{{ next.id }} {{ next.name }} →</a>{% endif %}
+    </nav>
+  </article>
+</div>
+{% endif %}
+{% endblock %}

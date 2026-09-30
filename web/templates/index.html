@@ -3,13 +3,27 @@
 {% block content %}
 <section class="hero">
   <h1 class="hero-title">LangGraph 漏洞靶场</h1>
-  <p class="hero-sub">OWASP Agentic AI Top 10 · ASI01–ASI10</p>
+  <p class="hero-sub">OWASP Agentic AI Top 10 · ASI01–ASI10 · 全部动作本地模拟，无真实网络调用</p>
   <div class="hero-actions">
-    <a class="btn primary btn-lg" href="{{ url_for('agent_page') }}">启动 Agent 框架</a>
+    <a class="btn primary btn-lg" href="{{ url_for('learn_index') }}">从学习路径开始</a>
+    <a class="btn ghost btn-lg" href="{{ url_for('arena_index') }}">直接进靶场</a>
   </div>
 </section>
 
 <div class="cards">
+  <div class="card">
+    <h3>学习路径</h3>
+    <table class="asi-table">
+      <tr><th>路径</th><th style="width:18%;">进度</th></tr>
+      {% for pt in learn_paths %}
+      <tr>
+        <td><a href="{{ url_for('learn_path_page', pid=pt.pid) }}">{{ pt.title }}</a></td>
+        <td>{% if pt.done == pt.total %}<span class="ok">已完成</span>{% else %}{{ pt.done }}/{{ pt.total }}{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
   <div class="card">
     <h3>组件状态</h3>
     <ul class="status-list">
@@ -17,23 +31,8 @@
       <li>依赖 (langgraph/flask): <span class="{{ 'ok' if deps_ok else 'bad' }}">{{ '正常' if deps_ok else '缺失' }}</span></li>
       <li>LLM 模式: <span class="{{ 'ok' if llm_mode == 'mock' else 'warn' }}">{{ 'Mock（离线）' if llm_mode == 'mock' else '真实（联网）' }}</span></li>
     </ul>
-  </div>
-
-  <div class="card">
-    <h3>快捷运行</h3>
-    <div class="quick-btns">
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi01') }}">ASI01 目标劫持</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi02') }}">ASI02 工具误用</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi03') }}">ASI03 权限滥用</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi04') }}">ASI04 供应链</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi05') }}">ASI05 代码执行</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi06') }}">ASI06 记忆投毒</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi07') }}">ASI07 代理间通信</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi08') }}">ASI08 级联故障</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi09') }}">ASI09 信任滥用</a>
-      <a class="btn" href="{{ url_for('asi_page', demo_id='asi10') }}">ASI10 失控代理</a>
-    </div>
-    <div class="quick-links">
+    <div class="quick-links" style="margin-top:12px;">
+      <a href="{{ url_for('kbindex') }}">知识库</a> ·
       <a href="{{ url_for('agent_page') }}">Agent 框架</a> ·
       <a href="{{ url_for('playground') }}">游乐场</a> ·
       <a href="{{ url_for('trace_page') }}">任务轨迹</a> ·
@@ -43,18 +42,21 @@
   </div>
 </div>
 
-<h2>ASI → 组件映射表</h2>
+<h2>ASI 主题</h2>
+<p class="muted">
+  每个主题一张整合页：攻击原理 → 源码与真实案例 → 防御对照 → 动手关卡。
+  建议按编号顺序学习，或跟着上方路径走。
+</p>
 <table class="asi-table">
   <thead>
-    <tr><th>ASI</th><th>漏洞名称</th><th>组件 / 位置</th><th>安全变体</th></tr>
+    <tr><th style="width:9%;">编号</th><th style="width:34%;">主题</th><th>一句话场景</th></tr>
   </thead>
   <tbody>
-    {% for row in asi_rows %}
+    {% for t in topics %}
     <tr>
-      <td class="asi-id">{{ row[0] }}</td>
-      <td>{{ row[1] }}</td>
-      <td class="mono">{{ row[2] }}</td>
-      <td>{{ row[3] }}</td>
+      <td class="asi-id">{{ t.id }}</td>
+      <td><a href="{{ url_for('topic_page', asi=t.id) }}">{{ t.name }}</a></td>
+      <td class="muted">{{ t.desc }}</td>
     </tr>
     {% endfor %}
   </tbody>
