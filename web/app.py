@@ -25,7 +25,6 @@ from lab import kb_map  # noqa: E402
 from lab import learn  # noqa: E402
 from lab import levels  # noqa: E402
 from lab import llmconf  # noqa: E402
-from lab import selfaudit  # noqa: E402
 from lab import solves  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
@@ -438,48 +437,19 @@ def learn_index():
     return render_template("learn.html", paths=learn.allrows())
 
 
-@app.route("/learn/<pid>", methods=["GET", "POST"])
+@app.route("/learn/<pid>")
 def learn_path_page(pid: str):
-    """学习路径详情：顺序单元 + 客观判定（答题 / 靶场通关）。"""
+    """学习路径详情：顺序单元（读文档 / 打关卡）。"""
     p = learn.getpath(pid)
     if not p:
         return render_template(
             "learn.html", paths=learn.allrows(), error=f"未知路径: {pid}"
         ), 404
 
-    result = None
-    if request.method == "POST":
-        uid = (request.form.get("uid") or "").strip()
-        answer = request.form.get("answer") or ""
-        result = learn.submit(pid, uid, answer)
-        result["uid"] = uid
-
     return render_template(
         "path.html",
         p={"pid": p["pid"], "title": p["title"], "en": p["en"], "desc": p["desc"]},
         units=learn.unitrows(pid),
-        result=result,
-    )
-
-
-@app.route("/selfaudit")
-def selfaudit_page():
-    """Agent 自评页：以本实例为对象运行只读自评，展示判定与证据。"""
-    rows = selfaudit.audit()
-    order = {"RISK": 0, "WARN": 1, "OK": 2}
-    rows = sorted(rows, key=lambda r: order.get(r["level"], 3))
-    counts = {"RISK": 0, "WARN": 0, "OK": 0}
-    for r in rows:
-        counts[r["level"]] = counts.get(r["level"], 0) + 1
-    return render_template(
-        "selfaudit.html",
-        rows=rows,
-        counts=counts,
-        total=len(rows),
-        declared=selfaudit.DECLARED,
-        tools=selfaudit.TOOLS,
-        doc=kb_map.kbdoc("case-self"),
-        drill=kb_map.kbdoc("case-drill"),
     )
 
 

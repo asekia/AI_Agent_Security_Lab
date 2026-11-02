@@ -198,26 +198,6 @@ KB_GROUPS = [
              "测试集设计、误报控制与上线自检项。"),
         ],
     ),
-    (
-        "case",
-        "案例教材",
-        "Case Studies & Drills",
-        "把知识库落到具体对象上：以本 Agent 实例为例，完成一次可取证、可复评的安全自评。",
-        [
-            ("case-arena", "可动手靶场：设计与使用", "Hands-on Arena: Design and Use",
-             "18 关三难度的可动手靶场：flag 判定、low/medium/high 分级、源码对照。"),
-            ("case-cross", "案例：跨会话数据读取实测", "Case: Cross-Session Data Read",
-             "实测确认沙箱只强制写入边界：工作区外读取成功，写入被拒。"),
-            ("case-prompt", "案例：对真实系统提示词的注入测试", "Injection Test Against This Agent's Prompt",
-             "提示词装配结构与注入测试集，并记录一次方法论失败与纠正。"),
-            ("case-self", "案例：以本 Agent 实例为对象的安全自评", "Self-Assessment Case: This Agent",
-             "对象画像、自评工具、9 项真实判定与逐条改进分析。"),
-            ("case-chain", "案例推演：一条针对本 Agent 的完整攻击链", "Walkthrough: Full Attack Chain",
-             "把薄弱点串成六阶段攻击链，并给出每一段的切断点。"),
-            ("case-drill", "案例演练：自评流程与判定标准", "Drill: Procedure & Criteria",
-             "取证、判定、改进、复评四步循环与判定标准。"),
-        ],
-    ),
 ]
 
 # slug -> 文档元数据（由 KB_GROUPS 派生，避免两处维护）
