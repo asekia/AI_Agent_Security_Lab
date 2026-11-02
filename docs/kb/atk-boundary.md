@@ -177,18 +177,8 @@ print(encode_dir(r"D:\AI WORKER\proj"))
 
 优先级依据：必修 1 是根因，其余是纵深。**只做 2~5 而不修读取边界，等于把门锁上但窗户继续开着。**
 
-## 8. 与本地靶场的对应
 
-| 本地位置 | 说明 |
-| --- | --- |
-| `/topic/asi03` | 权限与作用域越权的原理与关卡 |
-| `docs/kb/agt-agency.md` | 过度授权与工具误用 |
-| `docs/kb/def-arch.md` | 架构侧防御：硬约束必须在提示词之外 |
-| `docs/kb/atk-chain.md` | 本页属六阶段攻击链的"摄入 → 外带"两段 |
-
-对应官方编号：ASI03 身份与权限滥用、ASI06 记忆与上下文投毒（会话数据即记忆）、ASI08 级联故障（子代理携带父上下文）、LLM02 敏感信息泄露。
-
-## 9. 参考
+## 8. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM02：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI03 / ASI06 / ASI08：https://genai.owasp.org/

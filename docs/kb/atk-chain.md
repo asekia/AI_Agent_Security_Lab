@@ -154,16 +154,8 @@ print("无可观测副作用的阶段:", silent)   # ['植入', '摄入']
 - **产出物即传播载体**：任何会被他人阅读的产出物，都是载荷的潜在分发点。
 - **加固按成本收益排序**，断在最有价值的一环即可，不必按链序补齐每一环。
 
-## 8. 与本地靶场的对应
 
-| 本地位置 | 说明 |
-| --- | --- |
-| `/topic/asi01` → `/topic/asi05` | 阶段 2/3（注入）到阶段 4（代码执行）的原理与关卡 |
-| `docs/kb/atk-boundary.md` | 阶段 1/2 的读取边界机制 |
-| `docs/kb/agt-multi.md` | 阶段 5 的多代理与级联 |
-| `docs/kb/def-arch.md` | 各切断点对应的架构侧防御 |
-
-## 9. 参考
+## 8. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM01 / LLM05 / LLM06：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI01 / ASI03 / ASI04 / ASI05：https://genai.owasp.org/

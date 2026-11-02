@@ -161,18 +161,8 @@ python lab/selfaudit.py
 - **委派审计**：子代理默认继承更小权限集，失败必须回传。
 - **监听绑定 127.0.0.1**：管理面不对外。
 
-## 8. 与本地靶场的对应
 
-| 本地位置 | 说明 |
-| --- | --- |
-| `/selfaudit` | 本页九项清单的在线运行版（只读，输出证据/影响/处置） |
-| `/topic/asi03` | 权限与作用域越权的原理与关卡 |
-| `docs/kb/atk-chain.md` | 权限面缺口如何串成六阶段攻击链 |
-| `docs/kb/def-arch.md` | 各检查项对应的架构侧防御 |
-
-对应官方编号：ASI03 身份与权限滥用、ASI06 记忆与上下文投毒、LLM06 过度授权。
-
-## 9. 参考
+## 8. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM06：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI03 / ASI06：https://genai.owasp.org/
