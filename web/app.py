@@ -133,13 +133,6 @@ def index():
     )
 
 
-@app.route("/asi/<demo_id>")
-def asi_page(demo_id: str):
-    """渲染单个 ASI 演示页面（含运行按钮与轨迹展示）。"""
-    demo = runner.DEMOS.get(demo_id)
-    if not demo:
-        return render_template("asi.html", demo=None, error="未知演示 ID"), 404
-    return render_template("asi.html", demo=demo, error=None)
 
 
 # 每个主题页 curated 的相关知识库条目（slug 顺序即展示顺序）
@@ -206,8 +199,6 @@ def topic_page(asi: str):
         d = runner.DEMOS.get(tid, {})
         return {"id": tid, "name": ASI[tid.upper()]}
 
-    from lab.asi_map import ASI_COMP
-
     return render_template(
         "topic.html",
         topic={
@@ -215,8 +206,6 @@ def topic_page(asi: str):
             "name": ASI[asi.upper()],
             "num": asi[-2:],
             "desc": demo.get("desc", ""),
-            "scenario": demo.get("scenario", ""),
-            "component": ASI_COMP.get(asi.upper(), ""),
         },
         body=body,
         toc=toc,
@@ -326,52 +315,8 @@ def learn_path_page(pid: str):
 # ---------------------------------------------------------------------------
 
 
-@app.route("/api/run/<demo_id>", methods=["POST"])
-def api_run_demo(demo_id: str):
-    """运行指定演示并返回结构化轨迹。
-
-    参数:
-        demo_id: 演示标识（asi01 / asi06 / asi07）。
-
-    返回:
-        JSON，含 trace / final / outbox_entries / exfil。
-    """
-    global _current_task_run
-    try:
-        result = runner.run_demo(demo_id)
-    except Exception as e:  # noqa: BLE001
-        return jsonify({"error": str(e)}), 500
-
-    exfil = _detect_exfil(result.get("outbox_entries", []))
-    result["exfil"] = exfil
-    result["timestamp"] = _now_iso()
-    result["demo_id"] = demo_id
-    _current_task_run = result
-
-    return jsonify(result)
 
 
-@app.route("/api/documents/<name>", methods=["GET"])
-def api_documents(name: str):
-    """读取 seed/documents/ 下的文档，可选揭示隐藏注入载荷。
-
-    参数:
-        name: 文档文件名。
-        reveal: 查询参数，为 "true" 时返回隐藏载荷分析。
-
-    返回:
-        JSON，含 name / content / hidden（可选）。
-    """
-    reveal = request.args.get("reveal", "false").lower() == "true"
-    try:
-        content = runner.read_document(name)
-    except Exception as e:  # noqa: BLE001
-        return jsonify({"error": str(e)}), 404
-
-    resp: dict = {"name": name, "content": content}
-    if reveal:
-        resp["hidden"] = runner.extract_hidden_payloads(content)
-    return jsonify(resp)
 
 
 # ---------------------------------------------------------------------------

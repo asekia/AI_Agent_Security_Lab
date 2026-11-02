@@ -59,7 +59,6 @@ def main() -> int:
         ("/learn/p3", ["MLOps 平台攻击面"]),
         ("/topic/asi01", ["系统提示", "本页内容", "相关知识库"]),
         ("/topic/asi05", ["意外代码执行"]),
-        ("/asi/asi01", ["运行 asi01"]),
     ]:
         code, s = get(page)
         chk("%s 200" % page, code == 200)

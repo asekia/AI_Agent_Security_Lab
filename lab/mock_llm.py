@@ -7,7 +7,7 @@ MockLLM 根据场景（scenario）返回固定的工具调用序列，使攻击�
 OpenAICompatChatModel，它读取 LLM_API_KEY / OPENAI_BASE_URL / LAB_MODEL。
 两套东西是分开的：
 
-- 本模块 + lab/graph.py + lab/runner.py  → 预制剧本（/asi/<id>），确定性
+- 本模块 + lab/graph.py + lab/runner.py  → 确定性场景回放（CLI 演示）
 
 本模块由 lab/graph.py 与 lab/runner.py 使用。
 """
