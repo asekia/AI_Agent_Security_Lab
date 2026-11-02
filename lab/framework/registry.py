@@ -5,19 +5,10 @@ AgentFramework 把"漏洞场景"组织为可运行单元：
 - status="wired" 表示已接入 LangGraph 框架（当前仅 ASI01）；
 - status="stub"  表示已预留、尚未接入该框架（ASI02–ASI10）。
 
-**注意区分本仓库的两套子系统**（二者覆盖范围不同，勿混淆）：
-
-  lab/framework/  + /api/agent/*     真实 LLM 的 LangGraph 场景。
-                                     需要配 API key，跑的是真模型，
-                                     status 反映"是否接入该框架"。
-
-  lab/arena.py    + /arena           可动手靶场。18 关 × 3 难度，
-                                     用确定性规则引擎代替模型，
-                                     不需要 API key，带 flag 判定。
-
-因此 ASI02–ASI10 在本文件中是 stub（**未接入 LangGraph 框架**），
-但它们在靶场中**全部可用且已通过验证**（见 test_arena.py）。
-要练 ASI02–ASI10 请走 /arena；要观察真实模型行为请走 /api/agent。
+**覆盖范围说明**：本文件只负责 LangGraph 框架（真实 LLM）这一套子系统。
+ASI02–ASI10 在此为 stub（**未接入 LangGraph 框架**），但它们的原理、攻击
+步骤与防御在知识库 `/kb` 与主题页 `/topic/<asi>` 中已完整覆盖，
+并可用 `python demos/asiNN_*.py` 离线复现攻击链。
 
 接入新场景到本框架（例如后续做 ASI02 工具滥用）：
 1. 在 framework.py 中定义 build_agents(...) 返回 Agent 图 + 工具集；
@@ -229,7 +220,7 @@ class AgentFramework:
             )
         except BackendError as exc:
             return {"error": f"LLM 后端调用失败: {exc}"}
-        except Exception as exc:  # noqa: BLE001 - 靶场刻意暴露错误供教学
+        except Exception as exc:  # noqa: BLE001 - 本环境刻意暴露错误供教学
             return {"error": f"运行失败: {type(exc).__name__}: {exc}"}
 
         new_entries = self._outbox_new(before)

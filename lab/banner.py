@@ -7,9 +7,9 @@ def print_banner() -> None:
     banner = r"""
 ============================================================
   LOCAL SECURITY LAB
-  LangGraph Agentic Security 靶场 (ASI01-ASI10)
+  agent安全笔记 · Agentic Security (ASI01-ASI10)
   邮件结果仅写入本地；真实 LLM 按配置调用。
-  请勿将此靶场暴露到网络或指向真实服务。
+  请勿将本环境暴露到网络或指向真实服务。
 ============================================================
 """
     print(banner)

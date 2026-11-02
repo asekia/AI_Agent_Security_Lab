@@ -1,4 +1,4 @@
-"""ASI01 聊天靶场：真实 LLM 读取文档并演示目标劫持。"""
+"""ASI01 对话实验：真实 LLM 读取文档并演示目标劫持。"""
 from __future__ import annotations
 
 import json
@@ -117,7 +117,7 @@ def overscope(approve: bool) -> tuple[str, list[dict[str, Any]]]:
 def buildchat(backend: str, defense: bool, cfg: dict[str, Any] | None) -> Any:
     """构建真实 ASI01 聊天图。"""
     if backend not in ("real", "openai", "openai-compatible", "openai_compat"):
-        raise BackendError("ASI01 聊天靶场需要真实 LLM，请在设置页启用真实模式。")
+        raise BackendError("ASI01 对话实验需要真实 LLM，请在设置页启用真实模式。")
     from lab.framework.llm import get_chat_model
 
     model = get_chat_model("real", cfg or {})

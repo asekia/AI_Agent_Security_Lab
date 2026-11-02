@@ -1,9 +1,9 @@
 """lab/kb_map.py — LLM 安全知识库分类的单一来源。
 
-靶场最初只覆盖 OWASP Agentic AI Top 10（ASI01–ASI10）。LLM 安全本身的
+本知识库最初只覆盖 OWASP Agentic AI Top 10（ASI01–ASI10）。LLM 安全本身的
 知识体系（提示注入、编码混淆、越狱、模型与数据层攻击、上下文与记忆、
 智能体、AI 基础设施与供应链、防御与评估、案例演练）此前散落在内部培训笔记里，
-没有进入靶场，侧栏也无处可点。
+没有进入知识库，侧栏也无处可点。
 
 本模块把这套体系收敛为唯一来源，供侧栏、知识库首页、分组页与文档页复用，
 避免分类在各处各写一份而漂移。
@@ -33,7 +33,7 @@ KB_GROUPS = [
              "六类核心资产各自的威胁、攻击面、输入与后果。"),
             ("base-owasp", "OWASP LLM Top 10 (2025) 与 Agentic AI Top 10 (2026)",
              "OWASP LLM & Agentic Top 10",
-             "两套官方编号体系，以及与本地靶场场景的对应关系。"),
+             "两套官方编号体系，以及与本地实现和演示的对应关系。"),
             ("base-atlas", "MITRE ATLAS 技术矩阵与真实案例", "MITRE ATLAS Techniques & Cases",
              "官方 AML.Txxxx 技术编号、战术分组与已披露案例。"),
             ("base-stride", "STRIDE × AI 威胁建模", "STRIDE for AI",
@@ -46,7 +46,7 @@ KB_GROUPS = [
         "inj",
         "提示注入体系",
         "Prompt Injection",
-        "本靶场最核心的攻击族：从直接改写，到间接注入、结构化伪装与多步链路。",
+        "本知识库最核心的攻击族：从直接改写，到间接注入、结构化伪装与多步链路。",
         [
             ("inj-direct", "直接指令注入", "Direct Instruction Injection",
              "用户输入里直接改写目标、抢夺优先级或索取隐藏内容。"),

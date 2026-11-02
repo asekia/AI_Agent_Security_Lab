@@ -5,24 +5,13 @@
 <p class="muted">{{ p.desc }}</p>
 
 <table class="asi-table">
-  <tr><th style="width:5%;">#</th><th style="width:8%;">类型</th><th>动作</th><th style="width:10%;">状态</th></tr>
+  <tr><th style="width:5%;">#</th><th>内容</th></tr>
   {% for u in units %}
   <tr>
     <td>{{ loop.index }}</td>
-    <td>{% if u.kind == 'read' %}读{% else %}练{% endif %}</td>
     <td>
-      {% if u.kind == 'read' %}
-        {{ u.task }}
-        <a href="{{ url_for('kbview', slug=u.slug) }}">→ 打开文档</a>
-      {% else %}
-        {{ u.task }}
-        <a class="btn" href="{{ url_for('arena_page', cid=u.cid, level=u.level) }}">进入 {{ u.cid }} · {{ u.level }}</a>
-      {% endif %}
-    </td>
-    <td>
-      {% if u.kind == 'read' %}<span class="muted">—</span>
-      {% elif u.done %}<span class="ok">已通关</span>
-      {% else %}待通关{% endif %}
+      {{ u.task }}
+      <a href="{{ url_for('kbview', slug=u.slug) }}">→ 打开文档</a>
     </td>
   </tr>
   {% endfor %}

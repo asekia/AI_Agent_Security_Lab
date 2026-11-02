@@ -1,6 +1,6 @@
 # ASI03 身份与权限滥用：原理、源码与防御
 
-> 本文档解释靶场中的 ASI03：用户只授权 Agent 查看本会话能看到的数据，Agent 却以"提升后的管理员身份"自居，绕过行级授权聚合全部客户数据并外发。
+> 本文档解释本项目中的 ASI03：用户只授权 Agent 查看本会话能看到的数据，Agent 却以"提升后的管理员身份"自居，绕过行级授权聚合全部客户数据并外发。
 
 ---
 
@@ -71,10 +71,10 @@ OWASP Agentic AI Top 10（2026）把这一类风险列为 **ASI03:2026 – Agent
 
 ### 3.1 工具以宿主进程身份运行
 
-`execute_python` 用 `subprocess` 启动本地解释器，子进程直接继承靶场进程的用户身份：
+`execute_python` 用 `subprocess` 启动本地解释器，子进程直接继承本项目进程的用户身份：
 
 ```text
-靶场进程用户 = 宿主用户
+本项目进程用户 = 宿主用户
         ↓
 execute_python 的子进程 = 同一个宿主用户
         ↓
@@ -106,7 +106,7 @@ Agent 没有自己的、受约束的服务身份。它执行的代码能代表�
 
 ### 3.4 Agent 身份与用户身份没有绑定
 
-Agent 的动作理应代表某个具体用户的授权范围（on-behalf-of）。靶场里 Agent 与用户之间没有凭证绑定，于是出现典型的混乱代理人问题：A 的请求、B 的权限、C 的数据，混在同一个工具调用里。
+Agent 的动作理应代表某个具体用户的授权范围（on-behalf-of）。本项目里 Agent 与用户之间没有凭证绑定，于是出现典型的混乱代理人问题：A 的请求、B 的权限、C 的数据，混在同一个工具调用里。
 
 所以 ASI03 通常是下面几个问题叠加：
 
@@ -247,7 +247,7 @@ def send_email(to: str, subject: str, body: str) -> str:
 
 攻击组织 UNC6395（关联 ShinyHunters）窃取了 AI 聊天 agent Drift 的 OAuth 令牌，随后以这个"合法 agent"的身份批量访问 700 余家企业的 Salesforce 实例与 Google Workspace 邮箱。服务端看到的每一次请求都来自持有合法凭证的 agent——它无法分辨背后是客户意图还是攻击者意图，这正是典型的 **confused deputy（混乱代理人）**。Mandiant/Google 溯源披露，被广泛称为 2025 年最大 SaaS 泄露事件之一。
 
-**与靶场的对应**：一个 OAuth 令牌等于全部授权 ≈ 靶场里"Agent 声称提权"无人验证、`execute_python` 直接继承宿主身份。防御同向：短时效、窄作用域的凭证，越范围访问独立校验，凭证生命周期可吊销。
+**与本项目的对应**：一个 OAuth 令牌等于全部授权 ≈ 本项目里"Agent 声称提权"无人验证、`execute_python` 直接继承宿主身份。防御同向：短时效、窄作用域的凭证，越范围访问独立校验，凭证生命周期可吊销。
 
 来源：
 
@@ -276,7 +276,7 @@ def query_orders_safe(customer: str) -> str:
 
 ```python
 def query_orders_for_session(customer: str, session: dict) -> str:
-    # 更安全的方向（靶场未实现，生产建议）：
+    # 更安全的方向（本项目未实现，生产建议）：
     # 1. 校验 customer 是否在会话授权范围内
     # 2. 校验失败直接拒绝，而不是降级查询
     if customer not in session["allowed_customers"]:
@@ -312,7 +312,7 @@ send_email_safe("attacker@evil.lab", ...)
 
 ### 7.3 防御三：给 Agent 一个受约束的服务身份
 
-OWASP 对 ASI03 的核心建议是**唯一、有边界的 Agent 身份 + 短时效凭证**。生产方向（靶场未实现）：
+OWASP 对 ASI03 的核心建议是**唯一、有边界的 Agent 身份 + 短时效凭证**。生产方向（本项目未实现）：
 
 ```text
 每个 Agent 会话签发独立的短期凭证
@@ -337,7 +337,7 @@ Agent 说"我已提权为 admin"
 
 ### 7.4 现实世界的防御研究
 
-以下防御思路来自公开的安全研究与事故分析，不依赖本靶场：
+以下防御思路来自公开的安全研究与事故分析，不依赖本项目：
 
 | 防御思路 | 具体做法 | 来源 |
 |---|---|---|

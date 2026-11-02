@@ -28,10 +28,8 @@ os.chdir(ROOT)
 
 # 隔离：本测试要用请求体里的 base_url/api_key 覆盖，不该碰任何本机配置。
 os.environ["LAB_LLM_CONF"] = os.path.join(tempfile.gettempdir(), "_t_llm.json")
-os.environ["LAB_SOLVES"] = os.path.join(tempfile.gettempdir(), "_t_solves.jsonl")
-for f in (os.environ["LAB_LLM_CONF"], os.environ["LAB_SOLVES"]):
-    if os.path.isfile(f):
-        os.remove(f)
+if os.path.isfile(os.environ["LAB_LLM_CONF"]):
+    os.remove(os.environ["LAB_LLM_CONF"])
 
 from web.app import app  # noqa: E402
 

@@ -98,7 +98,7 @@ medium 档剥离显式标记，但不限制格式。攻击者可用 `.pt`、`.bi
 ```text
 [必修 1] 只用 safetensors 等无代码格式
   根治性措施：格式本身没有代码执行路径。
-  → 靶场 high 档正是这一条。
+  → 本项目 high 档正是这一条。
 
 [必修 2] 若必须用 pickle 系格式，强制 weights_only=True
   这是有效的缓解，但它是参数而非默认值，容易被遗漏。
@@ -117,14 +117,10 @@ medium 档剥离显式标记，但不限制格式。攻击者可用 `.pt`、`.bi
 
 **必修 1 与 2 是硬约束**；3、4 是纵深。注意必修 2 的措辞——把安全默认值放在封装层，比"要求每个调用点记得传参"可靠得多。
 
-## 7. 与本地靶场的对应
+## 7. 与本项目的对应
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `/arena/mdl01/low` | 直接指定 pickle，无任何限制 |
-| `/arena/mdl01/medium` | 剥离显式标记；换扩展名仍可通过 |
-| `/arena/mdl01/high` | 只允许 safetensors，打不通 |
-| `lab/arena.py` | `p_mdl` 与 `gate_safe` |
 | `docs/kb/mod-poison.md` | 训练期投毒：另一条"模型不可信"的路径 |
 
 对应官方编号：ASI04 供应链、ASI05 代码执行、LLM05 不安全输出处理。
@@ -135,4 +131,4 @@ medium 档剥离显式标记，但不限制格式。攻击者可用 `.pt`、`.bi
 - safetensors 设计动机（无代码执行的张量格式）：https://github.com/huggingface/safetensors
 - PyTorch `weights_only` 说明：https://pytorch.org/docs/stable/generated/torch.load.html
 - OWASP Agentic AI Top 10 ASI04 / ASI05：https://genai.owasp.org/
-- 本仓库 `/arena/mdl01`、`docs/kb/inf-cve.md`
+- 本仓库 `docs/kb/inf-cve.md`

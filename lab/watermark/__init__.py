@@ -1,6 +1,6 @@
 """lab/watermark — 对抗水印攻击的可运行样本。
 
-对应 `docs/kb/mod-watermark.md`。与靶场其他关卡不同，这里**不是** flag 制，
+对应 `docs/kb/mod-watermark.md`。与通关判定不同，这里**不是** flag 制，
 而是**测量制**：跑出一个对照矩阵，用数字说明水印在对抗下的实际强度。
 
 模块

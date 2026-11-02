@@ -1,5 +1,5 @@
 /* ============================================================
-   LangGraph 漏洞靶场 Web 界面 — Apple 风格
+   agent安全笔记 Web 界面 — Apple 风格
    依据 design-md/apple/DESIGN.md 设计令牌实现：
    - 单一强调色 Action Blue #0066cc，无装饰渐变
    - SF Pro 字体栈（非 Apple 平台回退 system-ui / PingFang / 雅黑）
@@ -521,7 +521,7 @@ pre.outbox-entry { color: var(--ink-muted-48); }
 textarea#prompt { width: 100%; min-width: 0; }
 label[for="prompt"] { display: block; color: var(--ink-muted-48); font-size: 14px; margin-bottom: 6px; }
 
-/* ---------- ASI01 聊天靶场 ---------- */
+/* ---------- ASI01 对话实验 ---------- */
 .chat-lab-card { max-width: 900px; }
 .chat-lab-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--hairline-soft); font-size: 13px; color: var(--ink-muted-48); }
 .chat-lab-status code { color: var(--call); background: var(--surface-pearl); padding: 3px 8px; border-radius: 5px; }

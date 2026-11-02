@@ -1,6 +1,6 @@
 # ASI07 不安全的代理间通信：原理、源码与防御
 
-> 本文档解释靶场中的 ASI07：supervisor 向 email_worker 派发了一个正常任务；email_worker 却伪造了一条"来自 supervisor"的指令发给 data_worker。data_worker 只看消息里的 `sender` 字段就信了，执行全量查询并外发。多 Agent 系统里，一条伪造消息就能指挥整个集群。
+> 本文档解释本项目中的 ASI07：supervisor 向 email_worker 派发了一个正常任务；email_worker 却伪造了一条"来自 supervisor"的指令发给 data_worker。data_worker 只看消息里的 `sender` 字段就信了，执行全量查询并外发。多 Agent 系统里，一条伪造消息就能指挥整个集群。
 
 ---
 
@@ -24,7 +24,7 @@ data_worker：sender == "supervisor" → 信任 → 执行
 query_orders 全量读取 + send_email 外发
 ```
 
-OWASP Agentic AI Top 10（2026）把这一类风险列为 **ASI07:2026 – Insecure Inter-Agent Communication**：Agent 之间的通道缺少认证、加密或语义校验，导致消息可被窃听、伪造、重放或篡改。官方描述的场景是"伪造的 Agent 间消息把整个集群引向错误方向"——本靶场演示的**消息伪造（Message Spoofing）**正是其中最典型的一种。
+OWASP Agentic AI Top 10（2026）把这一类风险列为 **ASI07:2026 – Insecure Inter-Agent Communication**：Agent 之间的通道缺少认证、加密或语义校验，导致消息可被窃听、伪造、重放或篡改。官方描述的场景是"伪造的 Agent 间消息把整个集群引向错误方向"——本项目演示的**消息伪造（Message Spoofing）**正是其中最典型的一种。
 
 ---
 
@@ -224,7 +224,7 @@ def data_worker(state: MultiAgentState) -> dict[str, Any]:
 
 ACL 2025 Findings 论文 *Red-Teaming LLM Multi-Agent Systems via Communication Attacks* 提出 **Agent-in-the-Middle（AiTM）**攻击：拦截并篡改 LLM 多 agent 系统中 agent 之间的消息，把整个任务引向攻击者目标——不需要攻破任何一个 agent 本体。Trail of Bits 2025 年 7 月的 **pajaMAS** 系列给出多 agent 劫持的公开复现演示。这类研究证明：只要消息通道没有认证与完整性保护，集群里任何一个节点都能被"替身指挥"。
 
-**与靶场的对应**：`email_worker` 伪造 sender 字段 ≈ AiTM 篡改消息流；`data_worker` 只比较 sender 字符串 ≈ 无认证信道。防御同向：消息签名 + nonce/时间戳 + 接收方独立授权。
+**与本项目的对应**：`email_worker` 伪造 sender 字段 ≈ AiTM 篡改消息流；`data_worker` 只比较 sender 字符串 ≈ 无认证信道。防御同向：消息签名 + nonce/时间戳 + 接收方独立授权。
 
 来源：
 
@@ -238,7 +238,7 @@ ACL 2025 Findings 论文 *Red-Teaming LLM Multi-Agent Systems via Communication 
 
 ### 7.1 防御一：消息签名 + 新鲜度保证
 
-生产方向（靶场未实现 safe 变体）：
+生产方向（本项目未实现 safe 变体）：
 
 ```python
 import hmac, hashlib, time
@@ -287,7 +287,7 @@ OWASP 的表述是：认证解决"你是谁"，授权必须独立回答"这件�
 
 ### 7.3 现实世界的防御研究
 
-以下防御思路来自公开的安全研究与事故分析，不依赖本靶场：
+以下防御思路来自公开的安全研究与事故分析，不依赖本项目：
 
 | 防御思路 | 具体做法 | 来源 |
 |---|---|---|

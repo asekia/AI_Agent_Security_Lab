@@ -6,7 +6,6 @@
   <p class="hero-sub">OWASP Agentic AI Top 10 · ASI01–ASI10</p>
   <div class="hero-actions">
     <a class="btn primary btn-lg" href="{{ url_for('learn_index') }}">从学习路径开始</a>
-    <a class="btn ghost btn-lg" href="{{ url_for('arena_index') }}">直接进靶场</a>
   </div>
 </section>
 
@@ -14,11 +13,12 @@
   <div class="card">
     <h3>学习路径</h3>
     <table class="asi-table">
-      <tr><th>路径</th><th style="width:18%;">进度</th></tr>
+      <tr><th>路径</th><th style="width:18%;">单元</th></tr>
       {% for pt in learn_paths %}
       <tr>
-        <td><a href="{{ url_for('learn_path_page', pid=pt.pid) }}">{{ pt.title }}</a></td>
-        <td>{% if pt.done == pt.total %}<span class="ok">已完成</span>{% else %}{{ pt.done }}/{{ pt.total }}{% endif %}</td>
+        <td><a href="{{ url_for('learn_path_page', pid=pt.pid) }}">{{ pt.title }}</a>
+            <span class="muted">· {{ pt.en }}</span></td>
+        <td>{{ pt.total }}</td>
       </tr>
       {% endfor %}
     </table>
@@ -44,7 +44,7 @@
 
 <h2>ASI 主题</h2>
 <p class="muted">
-  每个主题一张整合页：攻击原理 → 源码与真实案例 → 防御对照 → 动手关卡。
+  每个主题一张整合页：攻击原理 → 源码与真实案例 → 防御对照 → 可运行代码。
   建议按编号顺序学习，或跟着上方路径走。
 </p>
 <table class="asi-table">

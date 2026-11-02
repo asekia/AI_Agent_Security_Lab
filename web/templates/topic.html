@@ -26,13 +26,12 @@
         {% for t in toc %}
         <li><a href="#{{ t.id }}">{{ t.text }}</a></li>
         {% endfor %}
-        <li><a href="#hands-on">动手：靶场关卡</a></li>
         <li><a href="#related">相关知识库</a></li>
       </ol>
     </div>
 
     <div class="card">
-      <h3>在本靶场</h3>
+      <h3>对应实现</h3>
       <ul class="status-list">
         <li>漏洞场景: <span class="mono">{{ topic.scenario }}</span></li>
         <li>组件位置: <span class="mono">{{ topic.component }}</span></li>
@@ -44,20 +43,6 @@
   <article class="topic-body">
     {{ body | safe }}
 
-    <section id="hands-on" class="hands-on">
-      <h2>动手：靶场关卡</h2>
-      <p>
-        读完原理后自己构造载荷进关卡，按难度经防御流水线判定，拿到 flag。
-      </p>
-      <div class="card">
-        <h3>{{ arena.title }}</h3>
-        <p><b>通关目标</b>：{{ arena.goal }}</p>
-        <a class="btn primary" href="{{ url_for('arena_page', cid=arena.cid, level='low') }}">进入关卡（low）</a>
-        <a class="btn" href="{{ url_for('arena_page', cid=arena.cid, level='medium') }}">medium</a>
-        <a class="btn" href="{{ url_for('arena_page', cid=arena.cid, level='high') }}">high（验证防御）</a>
-        <a class="btn ghost" href="{{ url_for('asi_page', demo_id=topic.id) }}">先看预制演示</a>
-      </div>
-    </section>
 
     <section id="related">
       <h2>相关知识库</h2>

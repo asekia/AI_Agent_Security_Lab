@@ -309,15 +309,11 @@ for q in ("/watermark?reps=999", "/watermark?reps=abc",
     chk("边界参数 %s 不 500" % q,
         c.get(q).status_code == 200, q)
 
-# --- 边界（用户的约束：水印不设 flag 关卡，样本只是测量工具）---
-from lab import arena  # noqa: E402
+# --- 边界（水印是测量工具，不设通关机制）---
 from lab import kb_map  # noqa: E402
 
-chk("靶场无水印关卡（水印不进 flag 制）",
-    not any("wm" in cid.lower() for cid in arena.CHALLENGES),
-    "关卡数=%d" % len(arena.CHALLENGES))
-chk("靶场关卡数量未变", len(arena.CHALLENGES) == 18,
-    str(len(arena.CHALLENGES)))
+chk("知识库中没有水印关卡（水印不进通关制）",
+    all("wm" not in slug.lower() for slug in kb_map.KB_DOCS))
 chk("页面声明不发 flag（测量制边界）",
     "不发 flag" in r1.data.decode("utf-8"))
 chk("KB 条目描述声明不发 flag",

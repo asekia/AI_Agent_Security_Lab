@@ -94,7 +94,7 @@ medium 档护栏只看字面 → 放行；模型解码后理解并执行。
 ```text
 [必修 1] 先归一化再判定，而不是只判字面
   解码 + Unicode 归一化 + 零宽剥离 → 得到规范形式 → 再判定。
-  → 靶场 high 档正是这一条。
+  → 本项目 high 档正是这一条。
 
 [必修 2] 解码后必须复查（不能只解码）
   顺序是：归一化 → 判定 → 放行/拒绝。
@@ -108,16 +108,12 @@ medium 档护栏只看字面 → 放行；模型解码后理解并执行。
   绕过只需要换一种编码。
 ```
 
-**必修 4 是架构层面的判断**：本条与靶场其他关卡的关系正在于此——`/arena/grd01/high` 用归一化修好了这一关，但真实系统里护栏绕过往往是**通往其他关卡的入口**。
+**必修 4 是架构层面的判断**：本条与输入侧净化的关系正在于此——归一化能修好字面匹配这一关，但真实系统里护栏绕过往往是**通往其他问题的入口**。
 
-## 7. 与本地靶场的对应
+## 7. 与本项目的对应
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `/arena/grd01/low` | 明文，基准对照（会被拦） |
-| `/arena/grd01/medium` | base64 绕过字面匹配即通关 |
-| `/arena/grd01/high` | 解码归一化后判定，打不通 |
-| `lab/arena.py` | `p_grd`（真实 base64 解码）与 `gate_decode` |
 | `docs/kb/obf-unicode.md` | 零宽字符与同形字 |
 | `docs/kb/obf-split.md` | 拆分与分段拼接 |
 | `docs/kb/def-test.md` | 如何验证护栏真的有效 |
@@ -129,4 +125,4 @@ medium 档护栏只看字面 → 放行；模型解码后理解并执行。
 - OWASP Top 10 for LLM Applications (2025) LLM01：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10（防御与评估）：https://genai.owasp.org/
 - Unicode 归一化形式（NFC/NFKC 与安全）：https://unicode.org/reports/tr15/
-- 本仓库 `/arena/grd01`、`docs/kb/obf-unicode.md`、`docs/kb/def-test.md`
+- 本仓库 `docs/kb/obf-unicode.md`、`docs/kb/def-test.md`

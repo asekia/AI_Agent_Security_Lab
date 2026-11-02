@@ -146,7 +146,7 @@ IBM X-Force Red 在《Becoming the Trainer: Attacking ML Training Infrastructure
 - 任务提交接口按角色授权，限制可使用的镜像与资源。
 - 定期审计平台上的凭据引用与访问记录。
 
-## 7. 与本地靶场的对应
+## 7. 与本项目的对应
 
 | 本地位置 | 说明 |
 | --- | --- |

@@ -100,7 +100,7 @@ medium 档剥离显式标记行。改成自然语句即可：
 ```text
 [必修 1] 非文本通道的文本不进入模型上下文
   最直接有效。多数业务并不需要 EXIF/alt 参与推理。
-  → 靶场 high 档正是这一条。
+  → 本项目 high 档正是这一条。
 
 [必修 2] 若必须使用，标注来源并与指令分离
   "以下内容来自图片元数据，仅作数据"。
@@ -119,14 +119,10 @@ medium 档剥离显式标记行。改成自然语句即可：
 
 **必修 1 是硬约束**；必修 4 是常被忽略的一条——很多团队以为"有人看过图了"，但那个人根本没看到真正的载荷。
 
-## 7. 与本地靶场的对应
+## 7. 与本项目的对应
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `/arena/mm01/low` | 直接写进 alt 即通关 |
-| `/arena/mm01/medium` | 剥离显式标记；业务化措辞仍可通过 |
-| `/arena/mm01/high` | 非文本通道一律不进上下文，打不通 |
-| `lab/arena.py` | `p_mm` 与 `gate_chan` |
 | `docs/kb/inj-indirect.md` | 间接注入的一般原理 |
 
 对应官方编号：LLM01 提示注入、ASI01 目标劫持、LLM05 不安全输出处理。
@@ -136,4 +132,4 @@ medium 档剥离显式标记行。改成自然语句即可：
 - OWASP Top 10 for LLM Applications (2025) LLM01：https://genai.owasp.org/llm-top-10/
 - MITRE ATLAS（多模态与图像类攻击技术）：https://atlas.mitre.org/
 - EXIF 规范与 `UserComment` 字段：https://www.cipa.jp/std/documents/e/DC-008-Translation-2019-E.pdf
-- 本仓库 `/arena/mm01`、`docs/kb/inj-indirect.md`、`docs/kb/obf-unicode.md`
+- 本仓库 `docs/kb/inj-indirect.md`、`docs/kb/obf-unicode.md`

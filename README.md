@@ -1,6 +1,6 @@
 # agent安全笔记
 
-可动手的 AI Agent 安全靶场：18 个关卡覆盖 **OWASP Agentic AI Top 10（ASI01–ASI10）** 与扩展攻击面，提交攻击载荷即可判定通关、取得 flag。默认离线运行，也可接入任意 OpenAI 兼容模型。
+AI Agent 安全知识库与攻防实验环境：覆盖 **OWASP Agentic AI Top 10（ASI01–ASI10）** 与 LLM 安全全谱系，每篇文档讲清原理、攻击步骤与防御，并附可运行的最小复现代码。默认离线运行，也可接入任意 OpenAI 兼容模型。
 
 ---
 
@@ -210,14 +210,13 @@ python run_web.py
 
 Web 界面页面：
 - `/` 仪表盘：学习路径进度 + ASI 主题矩阵 + 组件状态
-- `/learn` **学习路径**：3 条路径 21 个单元（读文档 / 打关卡 / 验证题，全部客观判定）
-- `/topic/<asi>` **ASI 主题整合页**：原理全文 + 目录 + 动手关卡 + 相关知识
-- `/arena` **可动手靶场**：18 个关卡（ASI01–ASI10 + MCP / A2A / 向量库 / 模型文件 / 多模态 / 护栏 / 推理服务 / 自治），每关 low / medium / high 三档，提交攻击载荷判定通关并发放 flag
+- `/learn` **学习路径**：3 条共 20 个单元的有序阅读动线（读哪篇、重点看什么）
+- `/topic/<asi>` **ASI 主题整合页**：原理全文 + 自动目录 + 对应实现 + 相关知识
 - `/asi/<id>` 单个演示页（asi01 / asi02 / asi06 / asi07 / asi09）：运行并查看工具调用轨迹
 - `/agent` **Agent 框架页**：场景选择（当前仅 ASI01 接入）+ mock/真实后端切换 + 防御变体开关 + 推理轨迹与劫持裁决
 - `/asi01/chat` ASI01 对话：与真实模型多轮对话，观察真实注入行为
 - `/playground` 游乐场：自定义提示词 + 单/多 Agent 模式 + 揭示隐藏注入载荷
-- `/kb` 知识库：53 篇攻防文档（按分组浏览）
+- `/kb` 知识库：51 篇攻防文档（11 个分组，含原理、攻击步骤、可运行代码与防御）
 - `/selfaudit` 自评：以本机 Agent 实例为对象的一键自评
 - `/watermark` **水印对抗实验**：水印 → 窃取 → 伪造 → 清洗的对照矩阵、预算扫描与防御实测（测量页，不发 flag）
 - `/trace` 最近一次运行的完整轨迹
@@ -249,14 +248,10 @@ langgraph-vuln-lab/
 │   │   ├── agent.py          #    create_react_agent 封装 + 轨迹提取
 │   │   ├── defenses.py       #    输入净化 + 指令边界（ASI01 对照）
 │   │   └── registry.py       #    场景注册表（ASI01 wired，ASI02-10 stub）
-│   ├── arena.py              # ★ 靶场核心：18 关 spec、4 阶段判定、三档难度
-│   ├── flags.py              # ★ flag 签发与校验（HMAC-SHA256，key 见 .flagkey）
 │   ├── kb_map.py             # ★ 知识库分组与文档权威来源（/kb 侧栏）
-│   ├── levels.py             # 难度档位定义
 │   ├── asi_map.py            # ASI01–ASI10 与组件的映射表
 │   ├── selfaudit.py          # 自评：以本机 Agent 实例为对象
 │   ├── llmconf.py            # LLM 配置本机持久化（key 默认不落盘）
-│   ├── solves.py             # 通关记录
 │   ├── watermark/            # ★ 水印对抗实验样本（测量制，不发 flag）
 │   │   ├── kgw.py            #    KGW 绿名单水印内核（PRF + z 检验）
 │   │   ├── attack.py         #    窃取 / 伪造 / 清洗 / 对照组
@@ -303,7 +298,6 @@ langgraph-vuln-lab/
 │   ├── asi08-principle.md
 │   ├── asi09-principle.md
 │   └── asi10-principle.md
-└── test_arena.py             # 靶场测试（158 项，另见 test_web / test_llm / test_watermark / smoke_test）
 ```
 
 ---

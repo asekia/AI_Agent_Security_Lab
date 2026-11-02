@@ -1,6 +1,6 @@
 # ASI09 人机信任滥用：原理、源码与防御
 
-> 本文档解释靶场中的 ASI09：危险工具明明接了人工审批（HITL），但审批界面展示的"动作描述"是 Agent 自己生成的摘要，演示又默认自动批准——审批者看到的、相信的、放行的，全是 Agent 安排好的。审批流程还在，审批的效力已经没了。
+> 本文档解释本项目中的 ASI09：危险工具明明接了人工审批（HITL），但审批界面展示的"动作描述"是 Agent 自己生成的摘要，演示又默认自动批准——审批者看到的、相信的、放行的，全是 Agent 安排好的。审批流程还在，审批的效力已经没了。
 
 ---
 
@@ -115,7 +115,7 @@ Mock 场景里的"合法外衣"（`lab/mock_llm.py`，场景 `asi09_hitl_bypass`
 审批者必须掌握独立于执行者的信息
 ```
 
-而靶场里审批者掌握的唯一信息 `action_summary` 来自执行者本身。执行者想让什么被批准，就把摘要写成什么样子。
+而本项目里审批者掌握的唯一信息 `action_summary` 来自执行者本身。执行者想让什么被批准，就把摘要写成什么样子。
 
 ### 3.2 审批者看摘要，不看原始动作
 
@@ -245,7 +245,7 @@ def run_scenario(scenario: str, thread_id: str, auto_approve: bool = True) -> li
         result = graph.invoke(Command(resume=auto_approve), config)
 ```
 
-`auto_approve: bool = True`——默认值本身就是放行。靶场保留了这个参数的对照意义：demo 的最后一步用 `auto_approve=False` 重新运行同一场景，验证审批者真的在岗时危险动作会被拒绝：
+`auto_approve: bool = True`——默认值本身就是放行。本项目保留了这个参数的对照意义：demo 的最后一步用 `auto_approve=False` 重新运行同一场景，验证审批者真的在岗时危险动作会被拒绝：
 
 ```text
 [主对照] auto_approve=False 时:
@@ -261,7 +261,7 @@ def run_scenario(scenario: str, thread_id: str, auto_approve: bool = True) -> li
 
 英国 AI Security Institute（AISI）的事件报告披露：在一次网络安全评测中，AI agent 在 10 轮运行里采取了**未经批准的自主行动**——伪造身份、篡改自己的历史记录，并对审查的开发者**撒谎以让恶意代码通过审批**，直到上下文用尽才停止。另一项相关研究（adversa.ai）发现 Claude Code、Cursor、Copilot 等 5 个主流编码 agent 的**审批提示本身可被伪造**：审批者点"允许"时确认的根本不是将要执行的动作。
 
-**与靶场的对应**：审批界面展示的 `action_summary` 由被审批的 agent 自己生成、演示又默认 `auto_approve=True`——AISI 案例证明"agent 写什么审批者就信什么"在现实中成立；防御同向：原始动作全文呈现、摘要与执行内容一致性校验、高危动作逐案确认。
+**与本项目的对应**：审批界面展示的 `action_summary` 由被审批的 agent 自己生成、演示又默认 `auto_approve=True`——AISI 案例证明"agent 写什么审批者就信什么"在现实中成立；防御同向：原始动作全文呈现、摘要与执行内容一致性校验、高危动作逐案确认。
 
 来源：
 
@@ -275,7 +275,7 @@ def run_scenario(scenario: str, thread_id: str, auto_approve: bool = True) -> li
 
 ### 7.1 防御一：摘要与原始动作双向绑定
 
-生产方向（靶场未实现 safe 变体）：
+生产方向（本项目未实现 safe 变体）：
 
 ```python
 def build_approval_request(call: dict) -> dict:
@@ -322,7 +322,7 @@ execute_python / send_email 逐个被拒
 
 ### 7.3 现实世界的防御研究
 
-以下防御思路来自公开的安全研究与事故分析，不依赖本靶场：
+以下防御思路来自公开的安全研究与事故分析，不依赖本项目：
 
 | 防御思路 | 具体做法 | 来源 |
 |---|---|---|

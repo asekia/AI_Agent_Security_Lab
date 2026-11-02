@@ -19,14 +19,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from lab import arena  # noqa: E402
-from lab import flags  # noqa: E402
 from lab import kb_map  # noqa: E402
 from lab import learn  # noqa: E402
-from lab import levels  # noqa: E402
 from lab import llmconf  # noqa: E402
 from lab import selfaudit  # noqa: E402
-from lab import solves  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
 from lab.framework import get_framework  # noqa: E402
@@ -185,18 +181,6 @@ def _apply_llm_config() -> None:
 # ---------------------------------------------------------------------------
 
 
-@app.context_processor
-def inject_counts():
-    """把靶场规模注入所有模板，便于侧边栏展示覆盖范围。
-
-    靶场有 18 关（10 个 ASI + 8 个协议与运行时），侧边栏直接显示数量，
-    让人一眼看出覆盖面，而不用点进关卡列表才数得清。
-    """
-    try:
-        n = len(arena.CHALLENGES)
-    except Exception:  # noqa: BLE001 - 侧边栏不应因统计失败而整页 500
-        n = 0
-    return {"arena_count": n}
 
 
 # ---------------------------------------------------------------------------
@@ -293,7 +277,6 @@ def topic_page(asi: str):
     next_id = order[idx + 1] if idx < len(order) - 1 else None
 
     demo = runner.DEMOS.get(asi, {})
-    ch = arena.achall(asi)
 
     # 原理文档全文 + 目录
     doc_path = os.path.join(ROOT, "docs", f"{asi}-principle.md")
@@ -328,11 +311,6 @@ def topic_page(asi: str):
         body=body,
         toc=toc,
         related=related,
-        arena={
-            "cid": asi,
-            "title": ch["title"] if ch else asi,
-            "goal": ch["goal"] if ch else "",
-        } if ch else None,
         prev=_brief(prev_id) if prev_id else None,
         next=_brief(next_id) if next_id else None,
         error=None,
@@ -357,7 +335,7 @@ def agent_page():
 
 @app.route("/asi01/chat")
 def asichat():
-    """渲染 ASI01 聊天小靶场。"""
+    """渲染 ASI01 对话实验页。"""
     return render_template(
         "asi01_chat.html",
         llm_mode=_llm_config["mode"],
@@ -477,7 +455,7 @@ def selfaudit_page():
 def watermark_page():
     """水印对抗实验页：跑一轮对照实验，用真实测量数字说明结论。
 
-    与靶场其他页面不同，本页**不发 flag**，展示的是测量结果。
+与其他页面不同，本页展示的是测量结果。
     参数可调，便于横向比较不同配置下的水印强度。
     """
     from lab.watermark import lab as wmlab
@@ -525,79 +503,6 @@ def watermark_page():
     return html
 
 
-@app.route("/arena")
-def arena_index():
-    """可动手靶场：关卡列表与已获得 flag。"""
-    return render_template(
-        "arena_index.html",
-        chs=arena.challenges(),
-        lvs=levels.allrows(),
-        got=solves.latest(),
-    )
-
-
-@app.route("/arena/<cid>")
-def arena_chal(cid: str):
-    """关卡入口：未指定难度时落到 low 档。
-
-    注意：这里刻意**不**用 `defaults={"level": "low"}` 叠加在 arena_page 上。
-    Werkzeug 会把同 endpoint 的 defaults 规则合并，导致 `/arena/x/low`
-    被 308 重定向回 `/arena/x`。用独立入口更直白。
-    """
-    return arena_page(cid, "low")
-
-
-@app.route("/arena/<cid>/<level>", methods=["GET", "POST"])
-def arena_page(cid: str, level: str):
-    """攻击台：提交载荷 → 按难度防御执行 → 判定 → 发 flag。
-
-    这是本靶场与旧 demos 的关键区别：用户**自己构造载荷**，
-    而不是跑一个预制剧本。
-    """
-    ch = arena.achall(cid)
-    if not ch:
-        return render_template(
-            "arena_index.html",
-            chs=arena.challenges(),
-            lvs=levels.allrows(),
-            got=solves.latest(),
-        ), 404
-
-    lv = levels.lv(level)
-    if lv not in ch["levels"]:
-        lv = "low"
-
-    res = None
-    vres = None
-    payload = ""
-    if request.method == "POST":
-        action = (request.form.get("action") or "").strip()
-        if action == "verify":
-            cand = (request.form.get("candidate") or "").strip()
-            vres = "校验通过：这是 %s / %s 的有效 flag" % (cid, lv) if flags.verify(cid, lv, cand) \
-                else "校验失败：不匹配 %s / %s 的 flag" % (cid, lv)
-        else:
-            payload = request.form.get("payload") or ""
-            res = arena.judge(cid, lv, payload)
-            if res.get("pass") and res.get("flag"):
-                solves.rec(cid, lv, res["flag"], note="via /arena")
-
-    srcmap = {s["level"]: s for s in arena.sources(cid, lv)}
-    return render_template(
-        "arena.html",
-        ch={"cid": cid, "title": ch["title"], "brief": ch["brief"],
-            "goal": ch["goal"], "hint": ch["hint"],
-            "surface": ch["levels"][lv].get("surface", "载荷")},
-        lvs=levels.allrows(),
-        level=lv,
-        srcmap=srcmap,
-        res=res,
-        vres=vres,
-        payload=payload,
-        solved=solves.has(cid, lv),
-    )
-
-
 @app.route("/trace")
 def trace_page():
     """渲染当前任务从输入到结束的完整事件与工具调用历史。"""
@@ -623,6 +528,10 @@ def settings_page():
     cfg["remember"] = bool(saved.get("api_key"))
     cfg["store"] = os.path.basename(llmconf.path())
     return render_template("settings.html", config=cfg)
+
+
+# ---------------------------------------------------------------------------
+# JSON API
 
 
 # ---------------------------------------------------------------------------
@@ -762,7 +671,7 @@ def aichat():
             backend=backend,
             cfg=cfg,
         )
-    except Exception as exc:  # noqa: BLE001 - 靶场返回可读错误
+    except Exception as exc:  # noqa: BLE001 - 本环境返回可读错误
         return jsonify({"error": f"聊天运行失败: {type(exc).__name__}: {exc}"}), 500
     return jsonify(result)
 

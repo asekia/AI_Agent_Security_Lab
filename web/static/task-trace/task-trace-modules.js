@@ -4,7 +4,7 @@
  *   1. 最小模块加载器（__ModuleLoader__），供 trajectory bundle 原样运行；
  *   2. 五个依赖 shim（react / react-dom / jsx-runtime / dsh-client-runtime /
  *      dsh-client-ui-primitives），只实现 bundle 用到的导出；
- *   3. 数据适配器：把靶场 trace 事件（thought / tool_call / tool_result /
+ *   3. 数据适配器：把运行 trace 事件（thought / tool_call / tool_result /
  *      denied / node / final）转换为任务轨迹的 eventNodes + requests 快照模型；
  *   4. 中文文案 t()。
  *
@@ -228,7 +228,7 @@
   };
   function t(key) { return ZH[key] !== undefined ? ZH[key] : key; }
 
-  /* ================= 4. 数据适配器：靶场 trace → 任务轨迹快照 ================= */
+  /* ================= 4. 数据适配器：运行 trace → 任务轨迹快照 ================= */
   function buildSnapshot(run) {
     var events = run && Array.isArray(run.trace) ? run.trace : [];
     var prompt = (run && (run.prompt || run.scenario)) || "";
