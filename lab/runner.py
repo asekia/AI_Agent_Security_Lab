@@ -5,7 +5,7 @@
 
 设计原则：
 - 复用 lab.graph.run_scenario / lab.multi_agent.run_multi_agent 的真实执行逻辑，
-  保证 agent 行为与 demos/ 完全一致（漏洞行为不变）。
+  保证场景回放行为确定、可复现。
 - 通过 MockLLM 的确定性工具队列 + 图执行结果，重建每一步的
   {step, type, name, args, result} 结构化轨迹，供前端渲染。
 - 默认使用本地 Mock（确定性、离线）；真实 LLM 通过环境变量接入。
@@ -26,7 +26,7 @@ MEMORY_FILE = os.path.join(ROOT, "lab", "memory_store.json")
 STATE_DIR = os.path.join(ROOT, "lab", "state")
 CHECKPOINT_DB = os.path.join(STATE_DIR, "checkpoints.db")
 
-# 强制演示的元数据（与 demos/ 一一对应；命名对齐 OWASP 2026）
+# 场景元数据（命名对齐 OWASP 2026）
 DEMOS: dict[str, dict[str, Any]] = {
     "asi01": {
         "id": "asi01",

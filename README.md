@@ -131,7 +131,6 @@ python run_web.py
 .
 ├── run_web.py            # 本地站点入口
 ├── requirements.txt
-├── smoke_test.py         # 端到端冒烟（10 项）
 ├── test_web.py           # 页面可达性与内容契约（42 项）
 ├── lab/                  # 核心实验实现
 │   ├── asi_map.py        # ASI 名称与组件映射
@@ -146,24 +145,20 @@ python run_web.py
 ├── docs/
 │   ├── asi01-principle.md … asi10-principle.md
 │   └── kb/               # 50 篇分类知识文档
-├── seed/                 # 种子文档与订单库
+├── seed/                 # 示例载荷文档
 └── web/                  # Flask 站点（路由 / 模板 / 静态资源）
 ```
 
 ## 测试
 
 ```bash
-# 首次运行冒烟测试前生成种子数据库（web 页面本身不需要）
-python seed/seed_db.py
-
 python test_web.py       # 42 项：页面可达性、内容契约、已删功能无残留
-python smoke_test.py     # 10 项：场景、工具、记忆、多 Agent 链路
 ```
 
 ## 贡献
 
 - 技术内容以官方文档与公开研究为准；引用的 CVE/编号需可溯源。
-- 提交前运行 `test_web.py` 与 `smoke_test.py`。
+- 提交前运行 `test_web.py`。
 - 文档保持论文体结构，不写无信息量的过渡句。
 
 ## 许可证

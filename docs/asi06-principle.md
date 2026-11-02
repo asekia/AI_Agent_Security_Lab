@@ -26,7 +26,7 @@ OWASP Agentic AI Top 10（2026）把这一类风险列为 **ASI06:2026 – Memor
 
 ## 2. 攻击载荷在哪里
 
-文件：`demos/asi06_memory_poison.py`
+文件：`lab/mock_llm.py`（场景 `asi06_memory_poison`）
 
 演示直接调用记忆层展示投毒过程：
 
