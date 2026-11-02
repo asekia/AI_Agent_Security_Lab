@@ -362,6 +362,9 @@ def gate_scope(text: str, lv: str, cid: str) -> tuple[bool, dict]:
 
 def gate_hash(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """供应链闸门：只接受已锁定摘要的依赖。"""
+    if p_dep(text, lv)[0]:
+        return False, {"step": "出口闸门", "detail":
+                       "依赖含后门/未授权特征，拒绝安装（摘要无法改变包本身的可信度）"}
     m = re.search(r"sha256[:=]\s*([0-9a-fA-F]{8,})", text)
     if not m:
         return False, {"step": "出口闸门", "detail": "依赖未锁定摘要（要求 sha256=…），拒绝安装"}
@@ -381,29 +384,33 @@ def gate_noexec(text: str, lv: str, cid: str) -> tuple[bool, dict]:
 
 def gate_trust(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """信任闸门：记忆/消息写入要求可信来源标记。"""
+    if p_mem(text, lv)[0]:
+        return False, {"step": "出口闸门", "detail":
+                       "内容属于规则类写入，来源标记不能替代人工审核，拒绝落库"}
     if "src=trusted" not in text.lower():
         return False, {"step": "出口闸门", "detail": "写入缺少可信来源标记 src=trusted，拒绝落库"}
     return True, {"step": "出口闸门", "detail": "来源可信，允许写入"}
 
 
 def gate_verify(text: str, lv: str, cid: str) -> tuple[bool, dict]:
-    """审批闸门：动作需与描述一致（独立校验），防止摘要欺骗。"""
-    if "verify-ok" not in text.lower():
+    """审批/身份闸门：独立校验动作本身，不信任被审批方自报的标记。"""
+    probe = p_hitl if cid == "asi09" else p_agent
+    if probe(text, lv)[0]:
         return False, {"step": "出口闸门", "detail":
-                       "审批描述与实际动作不一致（需独立校验通过），拒绝执行"}
-    return True, {"step": "出口闸门", "detail": "描述与动作经独立校验一致，放行"}
+                       "独立校验发现动作与声明不一致，拒绝执行"}
+    return True, {"step": "出口闸门", "detail": "动作经独立校验，无越权/欺骗特征，放行"}
 
 
 def gate_lock(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """目标闸门：锁定初始目标，拒绝对目标的改写。"""
-    if any(w in text.lower() for w in ("new goal", "新目标", "改为", "重新定义", "override goal")):
+    if p_drift(text, lv)[0]:
         return False, {"step": "出口闸门", "detail": "检测到目标改写，已锁定原目标"}
     return True, {"step": "出口闸门", "detail": "目标未被改写"}
 
 
 def gate_depth(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """级联闸门：限制传播深度与扇出。"""
-    if any(w in text.lower() for w in ("all agents", "全部 agent", "递归", "recursive", "fanout")):
+    if p_casc(text, lv)[0]:
         return False, {"step": "出口闸门", "detail": "拒绝无限传播/全量扇出（深度与配额受限）"}
     return True, {"step": "出口闸门", "detail": "传播深度在限制内"}
 
@@ -435,6 +442,9 @@ def gate_tool(text: str, lv: str, cid: str) -> tuple[bool, dict]:
 
 def gate_card(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """身份闸门：Agent Card 必须签名且来源可信（A2A 身份伪造的根治）。"""
+    if p_a2a(text, lv)[0]:
+        return False, {"step": "出口闸门", "detail":
+                       "身份声明超出授权范围，签名无法改变声明内容，拒绝加入协作"}
     if "sig=" not in text.lower():
         return False, {"step": "出口闸门", "detail": "Agent Card 缺少签名，拒绝加入协作"}
     if re.search(r"https?://", text):
@@ -452,6 +462,9 @@ def gate_retr(text: str, lv: str, cid: str) -> tuple[bool, dict]:
 
 def gate_safe(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """加载闸门：只接受 safetensors 等无代码格式（模型反序列化的根治）。"""
+    if p_mdl(text, lv)[0]:
+        return False, {"step": "出口闸门", "detail":
+                       "请求的格式含反序列化执行面，拒绝加载（仅允许 safetensors）"}
     if chk(text, ("pickle", "pkl", "torch.load", "joblib", "__reduce__", "weights_only=false")):
         return False, {"step": "出口闸门", "detail":
                        "拒绝可能执行代码的格式，仅允许 safetensors（纯张量，无对象图）"}
@@ -490,6 +503,9 @@ def gate_auth(text: str, lv: str, cid: str) -> tuple[bool, dict]:
 
 def gate_apr(text: str, lv: str, cid: str) -> tuple[bool, dict]:
     """授权闸门：高影响动作需显式授权（过度自治的根治）。"""
+    if p_agency(text, lv)[0]:
+        return False, {"step": "出口闸门", "detail":
+                       "高影响动作缺少显式授权，拒绝自行执行"}
     if chk(text, ("不用问", "无需", "不用确认", "直接执行", "别问我", "自行",
                   "without asking", "don't ask")):
         return False, {"step": "出口闸门", "detail": "高影响动作必须经显式授权，拒绝自行执行"}
