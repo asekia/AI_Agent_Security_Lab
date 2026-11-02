@@ -2,7 +2,7 @@
 
 # agent安全笔记
 
-<img alt="tests" src="https://img.shields.io/badge/tests-52%20passing-brightgreen"> <img alt="python" src="https://img.shields.io/badge/python-3.12-blue"> <img alt="langgraph" src="https://img.shields.io/badge/LangGraph-1.2.11-purple"> <img alt="license" src="https://img.shields.io/badge/license-MIT-green">
+<img alt="tests" src="https://img.shields.io/badge/tests-42%20passing-brightgreen"> <img alt="python" src="https://img.shields.io/badge/python-3.12-blue"> <img alt="langgraph" src="https://img.shields.io/badge/LangGraph-1.2.11-purple"> <img alt="license" src="https://img.shields.io/badge/license-MIT-green">
 
 </div>
 
