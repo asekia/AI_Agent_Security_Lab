@@ -598,6 +598,25 @@ label[for="prompt"] { display: block; color: var(--ink-muted-48); font-size: 14p
   color: var(--ink);
 }
 .principle-body table { margin: 14px 0; }
+/* 内容区链接统一规范（覆盖浏览器默认蓝 + 下划线） */
+.topic-body a, .lead a, .muted a, .card a, .status-list a,
+.asi-table a, .hands-on a, .hero a, .crumbs a, .toc a, .quick-links a,
+.topic-side a, .prevnext a, .defense-table a, .card ul a {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 102, 204, 0.0);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.topic-body a:hover, .lead a:hover, .muted a:hover, .card a:hover,
+.status-list a:hover, .asi-table a:hover, .hands-on a:hover, .hero a:hover,
+.crumbs a:hover, .toc a:hover, .quick-links a:hover, .topic-side a:hover,
+.prevnext a:hover, .defense-table a:hover, .card ul a:hover {
+  border-bottom-color: rgba(0, 102, 204, 0.35);
+}
+/* 导航、按钮、侧栏内的链接保持原样式 */
+.global-nav a, .side-link, .btn, .nav-utility, .brand, .footer a {
+  border-bottom: none;
+}
 .principle-body li { margin: 4px 0; }
 .principle-body a { color: var(--primary); text-decoration: none; }
 .principle-body a:hover { text-decoration: underline; }

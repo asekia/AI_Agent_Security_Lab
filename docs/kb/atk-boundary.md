@@ -84,7 +84,66 @@ Error: cannot read "...session.jsonl.zstd": binary file
 
 敏感路径的可达性示例（只报可达性）：凭据文件、全局设置、项目缓存（含全项目会话元数据）、工作区外笔记——在读取边界缺失时均为可读。
 
-## 5. 检测与观察点
+## 5. 代码：原理的最小复现
+
+### 5.1 读工具拒绝不等于沙箱拒绝
+
+```text
+读工具:    Error: cannot read "...session.jsonl.zstd": binary file
+           <- 二进制文件判定，工具便利性设计，非权限拒绝
+
+命令执行:  读同一路径的原始字节
+           -> 成功，无沙箱拒绝
+```
+
+结论：任何"某工具读不了"的判断，必须换一种工具复核后才能作为安全结论。
+
+### 5.2 zstd 多帧：一次性解压的假阴性
+
+会话文件是**多帧拼接**的 zstd。用一次性 `decompress()` 只解第一帧就返回，会把大文件误读成极小字节——这是扫描假阴性的直接原因。以下代码可直接运行：
+
+```python
+import io
+import zstandard
+
+# 构造一个三帧拼接的 zstd（模拟真实会话文件）
+frames = [f'{{"seq":{i},"msg":"user message {i}"}}'.encode() for i in range(3)]
+blob = b"".join(zstandard.ZstdCompressor().compress(f) for f in frames)
+print("压缩后:", len(blob), "字节")
+
+# 错误做法：一次性 decompress 只解出第一帧（静默，不报错）
+bad = zstandard.ZstdDecompressor().decompress(blob)
+print("decompress() ->", bad)          # 只返回第一帧 -> 假阴性
+
+# 正确做法：流式读到 EOF
+good = zstandard.ZstdDecompressor().stream_reader(io.BytesIO(blob)).read()
+print("stream_reader() ->", good)      # 三帧全部解出
+```
+
+实测输出：
+
+```text
+压缩后: 87 字节
+decompress() -> b'{"seq":0,"msg":"m0"}'
+stream_reader() -> b'{"seq":0,"msg":"m0"}{"seq":1,"msg":"m1"}{"seq":2,"msg":"m2"}'
+```
+
+危险点在于**它不报错**：只解出第一帧并正常返回。实测量级参考：60,873 字节压缩 → 124,962 字节解压 → 145 条记录。若用错误做法，第一轮扫描会得到"196 字节"的结论，整份会话被判定为不存在——扫描的假阴性比漏扫更难发现。
+
+### 5.3 路径编码可逆
+
+```python
+def encode_dir(path: str) -> str:
+    # 项目目录名编码：可逆，且明文可枚举
+    return "--" + path.replace(":", "").replace("\\", "-").replace(" ", "~0020") + "--"
+
+print(encode_dir(r"D:\AI WORKER\proj"))
+# --D-AI~0020WORKER-proj--
+```
+
+编码不提供任何安全收益：目标环境的项目名通常可从仓库地址、报错信息、进程参数等处获得。
+
+## 6. 检测与观察点
 
 - 对工作区外路径的读取尝试，尤其是 `.zstd` / 会话目录 / 凭据文件路径。
 - 用命令执行读取被读工具判定为"二进制"的文件——这是边界绕过的直接信号。
@@ -92,7 +151,7 @@ Error: cannot read "...session.jsonl.zstd": binary file
 - 跨项目路径枚举：会话目录名编码模式的猜测与遍历。
 - "把外部数据搬进工作区"的写入：内容与当前任务无关时要告警。
 
-## 6. 防御与改进
+## 7. 防御与改进
 
 ```text
 [必修 1] 把读取边界纳入沙箱
@@ -118,7 +177,7 @@ Error: cannot read "...session.jsonl.zstd": binary file
 
 优先级依据：必修 1 是根因，其余是纵深。**只做 2~5 而不修读取边界，等于把门锁上但窗户继续开着。**
 
-## 7. 与本地靶场的对应
+## 8. 与本地靶场的对应
 
 | 本地位置 | 说明 |
 | --- | --- |
@@ -129,7 +188,7 @@ Error: cannot read "...session.jsonl.zstd": binary file
 
 对应官方编号：ASI03 身份与权限滥用、ASI06 记忆与上下文投毒（会话数据即记忆）、ASI08 级联故障（子代理携带父上下文）、LLM02 敏感信息泄露。
 
-## 8. 参考
+## 9. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM02：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI03 / ASI06 / ASI08：https://genai.owasp.org/

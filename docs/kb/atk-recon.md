@@ -92,14 +92,67 @@
 
 高影响配置的典型样本会命中多数 RISK：文件策略过宽、审批关闭、四类高影响能力齐备、无出口白名单、记忆双路径、委派无审计。这些单独看都可接受，组合即完整攻击链。
 
-## 5. 检测与观察点
+## 5. 代码：原理的最小复现
+
+自检工具就是本页清单的可执行版本：每条判定都带可复核证据（文件行原文、运行时声明、检出计数），不打印凭据值。节选两个检查项看判定怎么写：
+
+```python
+# lab/selfaudit.py（节选）
+DECLARED = {
+    "file_policy": "danger-full-access",
+    "approval_prompts": "disabled",
+    "shell": "pwsh",
+    "workdir": ROOT,
+}
+
+def check_app() -> list[dict]:
+    # 检查本仓库 Web 服务的监听地址。证据 = 代码行原文
+    run = slurp(os.path.join(ROOT, "run_web.py"))
+    line = find(run, r"app\.run\(.*") or find(src, r".*run\(.*host.*")
+    loopback = "127.0.0.1" in line or "localhost" in line
+    return [{
+        "id": "SVC-01", "title": "Web 服务监听范围",
+        "level": "OK" if loopback else "RISK",
+        "evidence": line,                      # 可复核：文件行原文
+        "impact": "仅回环监听时外部网络不可达；若为 0.0.0.0 则暴露给整个网络",
+        "fix": "保持 127.0.0.1 绑定；需要对外时前置认证网关",
+    }]
+
+def check_egress() -> list[dict]:
+    # 检查是否存在出站访问控制
+    src = slurp(os.path.join(ROOT, "lab", "framework", "defenses.py"))
+    hint = find(src, r".*(allow|whitelist|白名单|domain).*") if src else None
+    return [{
+        "id": "NET-01", "title": "出站访问控制",
+        "level": "WARN" if hint else "RISK",
+        "evidence": ("defenses.py 中出现相关字样: " + hint) if hint
+                    else "defenses.py 中未发现出站域名白名单或统一出口",
+        "impact": "Agent 可执行命令且无出口限制时，任何被诱发的请求都能到达外部",
+        "fix": "为命令执行与工具调用增加统一出口与域名白名单",
+    }]
+```
+
+三条判定纪律直接体现在代码里：
+
+1. **证据必须可复核**：`evidence` 字段放文件行原文或运行时声明，不放"我认为"。
+2. **无法确认记 WARN，不记 OK**：找不到 `app.run(...)` 时输出 WARN 并说明原因，而不是默认安全。
+3. **只读**：整个模块只读文件，不写、不发请求；涉及环境变量只统计名称与数量。
+
+运行与退出码：
+
+```text
+python lab/selfaudit.py
+退出码 0 = 无 RISK    1 = 存在 RISK     # 可接入 CI / 上线检查
+```
+
+## 6. 检测与观察点
 
 - 会话中出现"枚举工具面 / 询问权限策略"的提问序列。
 - 对配置文件、环境变量、监听端口的批量读取。
 - 记忆存储中同时存在隔离与未隔离两条读取路径（代码层信号）。
 - 委派调用中子代理权限高于任务所需，或失败无回传。
 
-## 6. 防御与改进
+## 7. 防御与改进
 
 - **最小权限工具集**：按任务授予，四类高影响能力不要默认齐备。
 - **审批通道开启**：高影响动作必须人工确认，且确认的是原始动作而非摘要（见 `atk-assemble.md`）。
@@ -108,7 +161,7 @@
 - **委派审计**：子代理默认继承更小权限集，失败必须回传。
 - **监听绑定 127.0.0.1**：管理面不对外。
 
-## 7. 与本地靶场的对应
+## 8. 与本地靶场的对应
 
 | 本地位置 | 说明 |
 | --- | --- |
@@ -119,7 +172,7 @@
 
 对应官方编号：ASI03 身份与权限滥用、ASI06 记忆与上下文投毒、LLM06 过度授权。
 
-## 8. 参考
+## 9. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM06：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI03 / ASI06：https://genai.owasp.org/
