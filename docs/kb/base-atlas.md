@@ -104,7 +104,6 @@ MITRE ATLAS 是面向 AI 系统的攻击技术知识库，用 `AML.Txxxx` 编号
 | AML.T0070 / T0071 RAG 投毒 | ASI06 记忆投毒 | `lab/memory.py` |
 | AML.T0054 越狱 | ASI01 / ASI09 演示 | `lab/runner.py` |
 | AML.T0086 经由工具外泄 | ASI02 / ASI10 | `lab/tools.py` |
-| AML.T0002 / T0058 获取与发布模型 | ASI04 代理供应链 | `lab/framework/registry.py` |
 | AML.T0069 LLM 系统信息发现 | ASI01 原理篇 | `docs/asi01-principle.md` |
 
 ## 8. 参考

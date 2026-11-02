@@ -21,12 +21,8 @@ if ROOT not in sys.path:
 
 from lab import kb_map  # noqa: E402
 from lab import learn  # noqa: E402
-from lab import llmconf  # noqa: E402
-from lab import selfaudit  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
-from lab.framework import get_framework  # noqa: E402
-from lab.framework.chat_asi01 import reset, savefile, turn  # noqa: E402
 from web.markdown import render_markdown  # noqa: E402
 
 # 原理文档注册表：doc_id → (markdown 路径, 页面标题)
@@ -74,66 +70,18 @@ DOCS = {
 }
 
 # 运行日志（本地持久化，仅记录运行元数据，不记录 API key）
-RUN_LOG = os.path.join(ROOT, "lab", "web", "run_log.jsonl")
 
 app = Flask(__name__)
 
 # /watermark 整页结果缓存（确定性计算，同参数同结果；上限 8 份防膨胀）。
-_WM_PAGE_CACHE: dict = {}
-
 # 当前任务状态：保存这一次任务从用户输入到结束的完整事件历史。
 # 新任务开始后整体替换，任务内部不会只保留最后一个工具调用。
 _current_task_run: dict = {}
-# 真实 LLM 模式配置（仅内存，不落盘）
-# 配置来源优先级：本机文件（设置页保存的）> 环境变量 > 默认值。
-# 本机文件优先，是因为用户是在网页上填的；环境变量作为无界面部署的入口。
-_saved = llmconf.load()
-_llm_config: dict = {
-    "mode": _saved.get("mode") or os.environ.get("LAB_LLM_MODE", "real"),
-    "provider": _saved.get("provider") or os.environ.get("LLM_PROVIDER", "openai"),
-    "api_key": _saved.get("api_key") or os.environ.get("LLM_API_KEY", ""),
-    "base_url": _saved.get("base_url") or os.environ.get("OPENAI_BASE_URL", ""),
-    "model": _saved.get("model") or os.environ.get("LAB_MODEL", ""),
-}
 
 
 def _now_iso() -> str:
     """返回当前 UTC 时间的 ISO 格式字符串。"""
     return datetime.now(timezone.utc).isoformat()
-
-
-def _log_run(entry: dict) -> None:
-    """将一次运行记录追加到本地 run_log.jsonl。
-
-    参数:
-        entry: 运行记录字典（timestamp / mode / prompt / exfil 等）。
-    """
-    os.makedirs(os.path.dirname(RUN_LOG), exist_ok=True)
-    with open(RUN_LOG, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-
-
-def _read_run_log(limit: int = 100) -> list[dict]:
-    """读取本地运行历史 run_log.jsonl。
-
-    参数:
-        limit: 最多返回的条数。
-
-    返回:
-        运行记录列表（最新在前）。
-    """
-    if not os.path.exists(RUN_LOG):
-        return []
-    entries: list[dict] = []
-    with open(RUN_LOG, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                try:
-                    entries.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return entries[-limit:][::-1]
 
 
 def _detect_exfil(outbox_entries: list[dict]) -> bool:
@@ -151,36 +99,9 @@ def _detect_exfil(outbox_entries: list[dict]) -> bool:
     return False
 
 
-def _apply_llm_config() -> None:
-    """把当前 LLM 配置同步到进程环境变量。
-
-    真实模式启用时写入 LLM_PROVIDER / LLM_API_KEY / OPENAI_BASE_URL / LAB_MODEL，
-    供 **lab/framework/llm.py 的 OpenAICompatChatModel** 读取。
-    注意不是 lab/mock_llm.py —— 那个模块只有确定性模拟，不读环境变量。
-
-    mock 模式则清除上述变量。
-
-    配置本身还会落盘到 lab/llm.json（见 lab/llmconf.py），
-    这样服务重启后不必重填；api_key 是否落盘由设置页的"记住 key"决定。
-    """
-    if _llm_config["mode"] == "real":
-        os.environ["LLM_PROVIDER"] = _llm_config.get("provider", "openai")
-        if _llm_config.get("api_key"):
-            os.environ["LLM_API_KEY"] = _llm_config["api_key"]
-        if _llm_config.get("base_url"):
-            os.environ["OPENAI_BASE_URL"] = _llm_config["base_url"]
-        if _llm_config.get("model"):
-            os.environ["LAB_MODEL"] = _llm_config["model"]
-    else:
-        for k in ("LLM_PROVIDER", "LLM_API_KEY", "OPENAI_BASE_URL", "LAB_MODEL"):
-            os.environ.pop(k, None)
-
-
 # ---------------------------------------------------------------------------
 # 模板全局变量
 # ---------------------------------------------------------------------------
-
-
 
 
 # ---------------------------------------------------------------------------
@@ -219,7 +140,7 @@ def index():
         learn_paths=learn.allrows(),
         venv_ok=venv_ok,
         deps_ok=deps_ok,
-        llm_mode=_llm_config["mode"],
+        llm_mode=os.environ.get("LAB_LLM_MODE", "mock"),
     )
 
 
@@ -317,31 +238,6 @@ def topic_page(asi: str):
     )
 
 
-@app.route("/playground")
-def playground():
-    """渲染游乐场页面（自定义提示词 + 模式选择 + 隐藏载荷揭示）。"""
-    return render_template("playground.html", llm_mode=_llm_config["mode"])
-
-
-@app.route("/agent")
-def agent_page():
-    """渲染 Agent 框架页面（真实 AI 模块接入 + ASI01 场景）。"""
-    return render_template(
-        "agent.html",
-        scenarios=get_framework().list_scenarios(),
-        llm_mode=_llm_config["mode"],
-    )
-
-
-@app.route("/asi01/chat")
-def asichat():
-    """渲染 ASI01 对话实验页。"""
-    return render_template(
-        "asi01_chat.html",
-        llm_mode=_llm_config["mode"],
-    )
-
-
 @app.route("/principle/<doc_id>")
 def principle_page(doc_id: str):
     """渲染原理文档页（将 docs/*.md 渲染为 HTML）。"""
@@ -432,104 +328,6 @@ def learn_path_page(pid: str):
     )
 
 
-@app.route("/selfaudit")
-def selfaudit_page():
-    """Agent 权限面自评页：以本实例为对象运行只读自评，展示判定与证据。"""
-    rows = selfaudit.audit()
-    order = {"RISK": 0, "WARN": 1, "OK": 2}
-    rows = sorted(rows, key=lambda r: order.get(r["level"], 3))
-    counts = {"RISK": 0, "WARN": 0, "OK": 0}
-    for r in rows:
-        counts[r["level"]] = counts.get(r["level"], 0) + 1
-    return render_template(
-        "selfaudit.html",
-        rows=rows,
-        counts=counts,
-        total=len(rows),
-        declared=selfaudit.DECLARED,
-        tools=selfaudit.TOOLS,
-    )
-
-
-@app.route("/watermark")
-def watermark_page():
-    """水印对抗实验页：跑一轮对照实验，用真实测量数字说明结论。
-
-与其他页面不同，本页展示的是测量结果。
-    参数可调，便于横向比较不同配置下的水印强度。
-    """
-    from lab.watermark import lab as wmlab
-    from lab.watermark import defend
-
-    try:
-        reps = max(2, min(20, int(request.args.get("reps", 8))))
-    except ValueError:
-        reps = 8
-    try:
-        n = max(60, min(600, int(request.args.get("n", 200))))
-    except ValueError:
-        n = 200
-    try:
-        nq = max(5, min(120, int(request.args.get("nq", 40))))
-    except ValueError:
-        nq = 40
-    try:
-        gamma = max(0.05, min(0.9, float(request.args.get("gamma", 0.25))))
-    except ValueError:
-        gamma = 0.25
-
-    # 整页计算是确定性的（同参数必同结果），按参数记忆化。
-    # 冷启动约 20s（校准+窃取+三条防御），缓存后毫秒级。
-    ck = ("wm", reps, n, nq, round(gamma, 4))
-    cached = _WM_PAGE_CACHE.get(ck)
-    if cached is not None:
-        return cached
-
-    res = wmlab.run(reps=reps, n=n, n_query=nq, gamma=gamma)
-    html = render_template(
-        "watermark.html",
-        r=res,
-        sweep=wmlab.sweep(reps=max(2, reps // 2), n=n, n_query=nq, gamma=gamma),
-        lencur=wmlab.lencur(reps=max(2, reps // 2), n=400, n_query=nq,
-                            gamma=gamma),
-        dfd=defend.allthree(reps=max(4, reps), n=n, n_query=nq, gamma=gamma,
-                            boosts=(1.0, 2.0, 5.0)),
-        doc=kb_map.kbdoc("mod-watermark"),
-        qs={"reps": reps, "n": n, "nq": nq, "gamma": gamma},
-    )
-    if len(_WM_PAGE_CACHE) >= 8:
-        _WM_PAGE_CACHE.clear()
-    _WM_PAGE_CACHE[ck] = html
-    return html
-
-
-@app.route("/trace")
-def trace_page():
-    """渲染当前任务从输入到结束的完整事件与工具调用历史。"""
-    return render_template(
-        "trace.html",
-        run=_current_task_run,
-        run_json=json.dumps(_current_task_run, ensure_ascii=False),
-    )
-
-
-@app.route("/log")
-def log_page():
-    """渲染攻击历史页面。"""
-    return render_template("log.html", runs=_read_run_log())
-
-
-@app.route("/settings")
-def settings_page():
-    """渲染设置页面（mock / 真实 LLM 切换）。"""
-    cfg = dict(_llm_config)
-    saved = llmconf.load()
-    cfg["saved"] = bool(saved)
-    cfg["remember"] = bool(saved.get("api_key"))
-    cfg["store"] = os.path.basename(llmconf.path())
-    return render_template("settings.html", config=cfg)
-
-
 # ---------------------------------------------------------------------------
 # JSON API
 
@@ -561,246 +359,7 @@ def api_run_demo(demo_id: str):
     result["demo_id"] = demo_id
     _current_task_run = result
 
-    _log_run(
-        {
-            "timestamp": result["timestamp"],
-            "mode": result["mode"],
-            "prompt": result.get("scenario", ""),
-            "demo_id": demo_id,
-            "exfil": exfil,
-            "steps": len(result.get("trace", [])),
-        }
-    )
     return jsonify(result)
-
-
-@app.route("/api/playground", methods=["POST"])
-def api_playground():
-    """运行游乐场自定义提示词并返回结构化轨迹。
-
-    请求体 JSON:
-        prompt: 用户提示词。
-        mode: "single" 或 "multi"。
-
-    返回:
-        JSON，含 trace / final / outbox_entries / exfil。
-    """
-    global _current_task_run
-    data = request.get_json(silent=True) or {}
-    prompt = str(data.get("prompt", "")).strip()
-    mode = str(data.get("mode", "single")).strip()
-    if not prompt:
-        return jsonify({"error": "提示词不能为空"}), 400
-
-    try:
-        if mode == "multi":
-            result = runner.run_multi_agent(prompt)
-        else:
-            result = runner.run_single_agent(prompt)
-    except Exception as e:  # noqa: BLE001
-        return jsonify({"error": str(e)}), 500
-
-    exfil = _detect_exfil(result.get("outbox_entries", []))
-    result["exfil"] = exfil
-    result["timestamp"] = _now_iso()
-    result["demo_id"] = None
-    _current_task_run = result
-
-    _log_run(
-        {
-            "timestamp": result["timestamp"],
-            "mode": result["mode"],
-            "prompt": prompt,
-            "demo_id": None,
-            "exfil": exfil,
-            "steps": len(result.get("trace", [])),
-        }
-    )
-    return jsonify(result)
-
-
-def _as_bool(value: object) -> bool:
-    """将 JSON 布尔/字符串解析为布尔值。"""
-    if isinstance(value, bool):
-        return value
-    return str(value).strip().lower() in ("1", "true", "yes", "on")
-
-
-@app.route("/api/asi01/chat/reset", methods=["POST"])
-def aireset():
-    """重置 ASI01 聊天会话。"""
-    data = request.get_json(silent=True) or {}
-    session = str(data.get("session", data.get("session_id", ""))).strip()
-    if session:
-        reset(session)
-    return jsonify({"ok": True})
-
-
-@app.route("/api/asi01/chat/file", methods=["POST"])
-def aifile():
-    """在 requirements/asi01/ 中写入用户提供的 Markdown。"""
-    data = request.get_json(silent=True) or {}
-    name = str(data.get("name", "")).strip()
-    text = str(data.get("text", ""))
-    result = savefile(name, text)
-    return jsonify({"result": result}), 400 if result.startswith("[error]") else 200
-
-
-@app.route("/api/asi01/chat/turn", methods=["POST"])
-def aichat():
-    """处理 ASI01 聊天消息并按文件内容执行动作。"""
-    data = request.get_json(silent=True) or {}
-    message = str(data.get("message", "")).strip()
-    if not message:
-        return jsonify({"error": "消息不能为空"}), 400
-    session = str(data.get("session", data.get("session_id", ""))).strip() or None
-    defense = _as_bool(data.get("defense", False))
-    approve = _as_bool(data.get("approve", True))
-    backend = "real"
-    cfg = {
-        "base_url": str(data.get("base_url") or _llm_config.get("base_url") or "").strip(),
-        "api_key": str(data.get("api_key") or _llm_config.get("api_key") or "").strip(),
-        "model": str(data.get("model") or _llm_config.get("model") or "").strip(),
-    }
-    try:
-        result = turn(
-            message,
-            session=session,
-            defense=defense,
-            approve=approve,
-            backend=backend,
-            cfg=cfg,
-        )
-    except Exception as exc:  # noqa: BLE001 - 本环境返回可读错误
-        return jsonify({"error": f"聊天运行失败: {type(exc).__name__}: {exc}"}), 500
-    return jsonify(result)
-
-
-@app.route("/api/agent/scenarios", methods=["GET"])
-def api_agent_scenarios():
-    """返回 Agent 框架的全部场景元数据（含 wired/stub 状态）。"""
-    return jsonify(get_framework().list_scenarios())
-
-
-@app.route("/api/agent/run", methods=["POST"])
-def api_agent_run():
-    """通过 Agent 框架运行指定场景（当前仅 ASI01 已接入）。
-
-    请求体 JSON:
-        scenario:  场景 id（默认 asi01）。
-        backend:   "mock"（默认）或 "real"（OpenAI 兼容端点）。
-        defense:   是否启用防御变体（默认 false）。
-        auto_approve: 危险工具是否自动批准（默认 true）。
-        base_url / api_key / model: 真实后端参数（可选，缺省回退到设置页/环境变量）。
-
-    返回:
-        JSON，含 trace / verdict / outbox_entries / exfil。
-    """
-    global _current_task_run
-    data = request.get_json(silent=True) or {}
-    scenario_id = str(data.get("scenario", "asi01")).strip()
-    backend = str(data.get("backend", "mock")).strip()
-    defense = _as_bool(data.get("defense", False))
-    auto_approve = _as_bool(data.get("auto_approve", True))
-
-    llm_cfg = None
-    if backend in ("real", "openai", "openai-compatible", "openai_compat"):
-        llm_cfg = {
-            "base_url": str(data.get("base_url") or _llm_config.get("base_url") or "").strip(),
-            "api_key": str(data.get("api_key") or _llm_config.get("api_key") or "").strip(),
-            "model": str(data.get("model") or _llm_config.get("model") or "").strip(),
-        }
-
-    try:
-        result = get_framework().run(
-            scenario_id,
-            backend=backend,
-            defense=defense,
-            auto_approve=auto_approve,
-            llm_cfg=llm_cfg,
-        )
-    except Exception as e:  # noqa: BLE001
-        return jsonify({"error": str(e)}), 500
-
-    if result.get("error"):
-        return jsonify(result), 400
-
-    result["timestamp"] = _now_iso()
-    result["demo_id"] = scenario_id
-    _current_task_run = result
-
-    _log_run(
-        {
-            "timestamp": result["timestamp"],
-            "mode": f"agent:{backend}",
-            "prompt": result.get("scenario", scenario_id),
-            "demo_id": scenario_id,
-            "defense": defense,
-            "hijacked": result.get("verdict", {}).get("hijacked", False),
-            "exfil": result.get("exfil", False),
-            "steps": len(result.get("trace", [])),
-        }
-    )
-    return jsonify(result)
-
-
-@app.route("/api/trace", methods=["GET"])
-def api_trace():
-    """返回当前任务的完整事件与工具调用历史。"""
-    return jsonify(_current_task_run)
-
-
-@app.route("/api/log", methods=["GET"])
-def api_log():
-    """返回本地运行历史。"""
-    return jsonify(_read_run_log())
-
-
-@app.route("/api/settings", methods=["POST"])
-def api_settings():
-    """更新 LLM 配置并写入本机文件。
-
-    请求体 JSON:
-        mode: "mock" 或 "real"。
-        provider / api_key / base_url / model: 真实模式参数（可选）。
-        remember: 是否把 api_key 写入本机文件（默认 False，密钥不落盘）。
-
-    返回:
-        更新后的配置（api_key 以 *** 代替）。
-    """
-    global _llm_config
-    data = request.get_json(silent=True) or {}
-    mode = str(data.get("mode", "mock")).strip()
-    if mode not in ("mock", "real"):
-        return jsonify({"error": "mode 必须为 mock 或 real"}), 400
-
-    _llm_config["mode"] = mode
-    if mode == "real":
-        _llm_config["provider"] = str(data.get("provider", "openai")).strip() or "openai"
-        if data.get("api_key"):
-            _llm_config["api_key"] = str(data["api_key"]).strip()
-        if data.get("base_url"):
-            _llm_config["base_url"] = str(data["base_url"]).strip()
-        if data.get("model"):
-            _llm_config["model"] = str(data["model"]).strip()
-    _apply_llm_config()
-
-    # 落盘：非敏感字段总是保存；api_key 仅在显式勾选时保存。
-    keep = bool(data.get("remember"))
-    if data.get("forget"):
-        llmconf.forget(_llm_config)
-        _llm_config["api_key"] = ""
-        _apply_llm_config()
-    else:
-        llmconf.save(_llm_config, keep=keep)
-
-    # 返回时隐藏 api_key
-    safe = dict(_llm_config)
-    safe["api_key"] = "***" if safe.get("api_key") else ""
-    safe["remember"] = keep
-    safe["store"] = os.path.basename(llmconf.path())
-    safe["persisted"] = os.path.isfile(llmconf.path())
-    return jsonify(safe)
 
 
 @app.route("/api/documents/<name>", methods=["GET"])

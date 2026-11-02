@@ -68,25 +68,32 @@
    进程环境变量中的令牌类变量名（只看名称与数量，不读值）
 ```
 
-### 4.2 自动化自检
+### 4.2 手工执行版
 
-仓库提供只读自检工具，把上述九项逐条跑出可复核证据：
+把九项清单落成可复核的取证动作，每项只记两类证据：**可复核旁证**（文件行、字节数、配置原文）或**原文引用**：
 
 ```text
-运行方式
-  .\.venv\Scripts\python.exe lab\selfaudit.py
-
-输出结构
-  [RISK|WARN|OK] 编号 标题
-    证据: 可复核的取证结果（文件行 / 运行时声明 / 检出计数）
-    影响: 该问题在本实例上具体意味着什么
-    处置: 可执行的改进动作
-
-退出码
-  0 = 无 RISK    1 = 存在 RISK   （可接入流水线）
+POL-01  读运行时声明，取 file_policy 字段值
+POL-02  读运行时声明，取 approval_prompts 字段值
+TOOL-01 枚举工具面，按"文件写/命令执行/浏览器/委派"四类归并计数
+NET-01  在命令执行与工具调用代码路径上搜索出站域名白名单或统一出口
+MEM-01  检查记忆模块是否只有按会话隔离的读取路径
+AGT-01  检查子代理是否默认继承更小权限、失败是否回传
+INJ-01  确认产出物是否引用了工作区外资料、读写之间有无来源标注
+SVC-01  读 app.run(...) 一行，确认 host 是 127.0.0.1
+SEC-01  统计环境变量中的凭据类变量名（只统计，不读值）
 ```
 
-工具设计约束：**只读**（不修改文件、不发外部请求）、**不打印凭据值**（只统计数量与名称）。
+输出结构（每个工具按此记录，便于横向比较与复盘）：
+
+```text
+[RISK|WARN|OK] 编号 标题
+  证据: 可复核的取证结果（文件行 / 运行时声明 / 检出计数）
+  影响: 该问题在本实例上具体意味着什么
+  处置: 可执行的改进动作
+```
+
+纪律：**只读**（不修改文件、不发外部请求）、**不打印凭据值**。
 
 ### 4.3 典型判定结果形态
 
@@ -94,56 +101,53 @@
 
 ## 5. 代码：原理的最小复现
 
-自检工具就是本页清单的可执行版本：每条判定都带可复核证据（文件行原文、运行时声明、检出计数），不打印凭据值。节选两个检查项看判定怎么写：
+把两项检查写成最小可执行形式——注意 `evidence` 放的是**可复核的原文**，不是结论：
 
 ```python
-# lab/selfaudit.py（节选）
+import re
+
 DECLARED = {
     "file_policy": "danger-full-access",
     "approval_prompts": "disabled",
     "shell": "pwsh",
-    "workdir": ROOT,
 }
 
-def check_app() -> list[dict]:
-    # 检查本仓库 Web 服务的监听地址。证据 = 代码行原文
-    run = slurp(os.path.join(ROOT, "run_web.py"))
-    line = find(run, r"app\.run\(.*") or find(src, r".*run\(.*host.*")
-    loopback = "127.0.0.1" in line or "localhost" in line
-    return [{
-        "id": "SVC-01", "title": "Web 服务监听范围",
-        "level": "OK" if loopback else "RISK",
-        "evidence": line,                      # 可复核：文件行原文
-        "impact": "仅回环监听时外部网络不可达；若为 0.0.0.0 则暴露给整个网络",
-        "fix": "保持 127.0.0.1 绑定；需要对外时前置认证网关",
-    }]
+def check_policy(declared: dict) -> dict:
+    """POL-01/02：文件策略与审批通道。证据 = 运行时声明原文。"""
+    risky = declared["file_policy"] != "workspace-write"
+    return {
+        "id": "POL-01", "level": "RISK" if risky else "OK",
+        "evidence": f"file_policy={declared['file_policy']}",
+        "impact": "完整文件访问时，读取边界缺失（见 atk-boundary.md）",
+        "fix": "改用 workspace-write 并补齐读取侧白名单",
+    }
 
-def check_egress() -> list[dict]:
-    # 检查是否存在出站访问控制
-    src = slurp(os.path.join(ROOT, "lab", "framework", "defenses.py"))
-    hint = find(src, r".*(allow|whitelist|白名单|domain).*") if src else None
-    return [{
-        "id": "NET-01", "title": "出站访问控制",
-        "level": "WARN" if hint else "RISK",
-        "evidence": ("defenses.py 中出现相关字样: " + hint) if hint
-                    else "defenses.py 中未发现出站域名白名单或统一出口",
-        "impact": "Agent 可执行命令且无出口限制时，任何被诱发的请求都能到达外部",
-        "fix": "为命令执行与工具调用增加统一出口与域名白名单",
-    }]
+def check_listener(source: str) -> dict:
+    """SVC-01：服务监听地址。证据 = 代码行原文。"""
+    m = re.search(r'app\.run\(host="([^"]+)"', source)
+    if not m:
+        return {"id": "SVC-01", "level": "WARN",
+                "evidence": "未找到 app.run(...) 调用",
+                "impact": "无法判断服务是否仅监听回环地址",
+                "fix": "显式声明 host 与 port，并确认绑定 127.0.0.1"}
+    host = m.group(1)
+    return {
+        "id": "SVC-01", "level": "OK" if host == "127.0.0.1" else "RISK",
+        "evidence": m.group(0),
+        "impact": "仅回环监听时外部网络不可达；0.0.0.0 则暴露给整个网络",
+        "fix": "保持 127.0.0.1 绑定；需要对外时前置认证网关",
+    }
+
+rows = [check_policy(DECLARED), check_listener(open("web/app.py", encoding="utf-8").read())]
+for r in rows:
+    print(f"[{r['level']:4}] {r['id']}  证据: {r['evidence']}")
 ```
 
 三条判定纪律直接体现在代码里：
 
-1. **证据必须可复核**：`evidence` 字段放文件行原文或运行时声明，不放"我认为"。
+1. **证据必须可复核**：`evidence` 字段放声明原文或代码行，不放"我认为"。
 2. **无法确认记 WARN，不记 OK**：找不到 `app.run(...)` 时输出 WARN 并说明原因，而不是默认安全。
-3. **只读**：整个模块只读文件，不写、不发请求；涉及环境变量只统计名称与数量。
-
-运行与退出码：
-
-```text
-python lab/selfaudit.py
-退出码 0 = 无 RISK    1 = 存在 RISK     # 可接入 CI / 上线检查
-```
+3. **不读凭据值**：涉及环境变量只统计名称与数量。
 
 ## 6. 检测与观察点
 

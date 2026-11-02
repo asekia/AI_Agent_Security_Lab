@@ -114,8 +114,6 @@ KB_GROUPS = [
              "训练期植入错误关联或触发式后门，验证集难以发现。"),
             ("mod-embed", "向量与嵌入弱点", "Vector & Embedding Weaknesses",
              "RAG 索引污染、跨租户检索泄露与嵌入反演。"),
-            ("mod-watermark", "对抗水印攻击", "Adversarial Watermark Attacks",
-             "水印的窃取、去除与伪造：为何溯源线索不等于判定证据。附可运行的对抗实验样本、防御实测（限流/轮换/扰动）与方案族对比（不发 flag）。"),
         ],
     ),
     (

@@ -64,7 +64,6 @@
 | 本地位置 | 说明 |
 | --- | --- |
 | `lab/graph.py` | 系统提示与任务定义所在处 |
-| `lab/framework/chat_asi01.py` | ASI01 对话流程 |
 | `docs/asi01-principle.md` | ASI01 原理与系统提示说明 |
 
 ## 8. 参考

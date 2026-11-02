@@ -149,8 +149,6 @@ SecLists 等标准字典不包含这些路径——需要自行扩充进 ffuf / 
 | 本地位置 | 说明 |
 | --- | --- |
 | `web/app.py` | 本地 Web 服务入口，可对照端口暴露方式 |
-| `lab/framework/llm.py` | 模型调用层，对应"推理服务"的位置 |
-| `lab/framework/registry.py` | 模型与资源登记，对应资产清点 |
 
 ## 8. 参考
 

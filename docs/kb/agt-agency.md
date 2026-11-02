@@ -63,7 +63,6 @@ Agent 被授予了超出任务所需的权限、工具与自主性，于是任�
 | 本地位置 | 说明 |
 | --- | --- |
 | `lab/tools.py` | 工具定义与本地副作用实现 |
-| `lab/framework/tools.py` | Agent 框架侧的工具封装 |
 | `lab/graph.py` | 工具调用链路与人工审批 |
 | `lab/runner.py` | ASI02 / ASI03 场景执行入口 |
 

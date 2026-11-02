@@ -66,9 +66,7 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/defenses.py` | 本地防御与检测逻辑的实现位置 |
 | `seed/documents/*.md` | 被扰动内容的常见载体 |
-| `lab/framework/chat_asi01.py` | ASI01 交互流程中处理用户输入 |
 
 ## 8. 参考
 

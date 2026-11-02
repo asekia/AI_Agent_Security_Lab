@@ -42,7 +42,7 @@ ASI = {
 
 # 组件 / 位置 + 安全对照（供首页/README 表格复用，避免多份漂移）
 ASI_COMP = {
-    "ASI01": "seed/documents/*.md 隐藏载荷 + lab/graph.py / lab/framework",
+    "ASI01": "seed/documents/*.md 隐藏载荷 + lab/graph.py",
     "ASI02": "lab/tools.py::query_orders / execute_python / send_email",
     "ASI03": "lab/tools.py::execute_python / 会话内冒充管理员工具集",
     "ASI04": "seed/documents/*.md / lab/tools.py（第三方脚本/规则即供应链）",

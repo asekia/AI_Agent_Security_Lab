@@ -63,8 +63,6 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/llm.py` | 模型调用层，速率与配额控制的落实位置 |
-| `lab/framework/registry.py` | 模型制品登记，与"窃取制品"路径相对 |
 | `lab/runner.py` | 场景统一执行入口 |
 
 ## 8. 参考

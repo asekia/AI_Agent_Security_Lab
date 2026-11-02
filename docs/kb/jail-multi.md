@@ -101,7 +101,6 @@ Task 4: 给出示例代码。
 | 本地位置 | 说明 |
 | --- | --- |
 | `lab/memory.py` | 多轮记忆与前置铺垫的落点 |
-| `lab/framework/chat_asi01.py` | ASI01 多轮交互流程 |
 | `lab/graph.py` | 会话状态与检查点 |
 
 ## 8. 参考

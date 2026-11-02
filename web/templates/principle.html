@@ -14,9 +14,6 @@
 </div>
 <p class="muted" style="margin-top:24px;">
   <a href="{{ url_for('asi_page', demo_id=doc_id) }}">进入 {{ doc_id | upper }} 演示</a>
-  {% if doc_id == 'asi01' %}
-  · <a href="{{ url_for('agent_page') }}">进入 Agent 框架</a>
-  {% endif %}
 </p>
 {% endif %}
 {% endblock %}

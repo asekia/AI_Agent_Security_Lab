@@ -69,7 +69,6 @@
 | --- | --- |
 | `seed/documents/*.md` | 作为"训练 / 检索资料"的本地载体 |
 | `lab/memory.py` | 记忆写入，与投毒在概念上对应 |
-| `lab/framework/registry.py` | 模型制品登记与来源校验的落点 |
 
 ## 8. 参考
 

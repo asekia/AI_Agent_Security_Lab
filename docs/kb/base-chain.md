@@ -66,7 +66,6 @@ D. 评测污染
 
 | 阶段 | 本地场景 | 相关文件 |
 | --- | --- | --- |
-| 4 验证与打包 | ASI04 代理供应链 | `lab/framework/registry.py` |
 | 1 / 2 数据 | ASI04 场景种子文档 | `seed/documents/*.md` |
 | 5 推理部署 | Web 应用入口 | `web/app.py` |
 | 全链路可观测 | 运行轨迹与日志 | `web/app.py` 的 `/trace`、`/log` |

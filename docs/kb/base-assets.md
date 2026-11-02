@@ -65,7 +65,6 @@
 | --- | --- | --- |
 | 系统提示 | `lab/graph.py` 系统提示、`seed/documents/*.md` | ASI01 目标劫持 |
 | 嵌入与记忆 | `lab/memory.py` | ASI06 记忆投毒 |
-| 模型注册表 | `lab/framework/registry.py` | ASI04 代理供应链 |
 | 工具与副作用 | `lab/tools.py` | ASI02 / ASI05 / ASI10 |
 
 ## 8. 参考

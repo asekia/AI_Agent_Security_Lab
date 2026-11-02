@@ -77,39 +77,6 @@ def main() -> None:
     final = run_multi_agent(thread_id="smoke-asi07")
     check("ASI07 data_worker 执行伪造指令", any("attacker@evil.lab" in r for r in final.get("results", [])))
 
-    print("\n[6] Agent 框架 (LangChain/LangGraph, ASI01)")
-    from lab.framework import get_framework
-
-    fw = get_framework()
-    wired = [s for s in fw.list_scenarios() if s["status"] == "wired"]
-    check("框架注册表仅 ASI01 已接入", [s["id"] for s in wired] == ["asi01"])
-
-    fr = fw.run("asi01", backend="mock", defense=False, auto_approve=True)
-    check("框架 ASI01 无防御 → 目标劫持", fr.get("verdict", {}).get("hijacked", False) is True)
-    check("框架 ASI01 无防御 → 外泄记录", fr.get("exfil", False) is True)
-    framework_trace = fr.get("trace", [])
-    check("框架轨迹包含推理/调用/结果", any(t["type"] == "thought" for t in framework_trace))
-    framework_calls = [t for t in framework_trace if t.get("type") == "tool_call"]
-    framework_results = [t for t in framework_trace if t.get("type") in ("tool_result", "denied")]
-    check(
-        "框架轨迹保留任务内全部工具调用",
-        [t.get("name") for t in framework_calls] == ["read_document", "query_orders", "send_email"],
-    )
-    check(
-        "框架工具调用与结果按 call_id 一一配对",
-        len(framework_calls) == len(framework_results)
-        and all(
-            call.get("call_id")
-            and any(result.get("call_id") == call.get("call_id") for result in framework_results)
-            for call in framework_calls
-        ),
-    )
-
-    fr_safe = fw.run("asi01", backend="mock", defense=True, auto_approve=True)
-    check("框架 ASI01 有防御 → 未劫持", fr_safe.get("verdict", {}).get("hijacked", False) is False)
-
-    fr_stub = fw.run("asi02", backend="mock")
-    check("框架 ASI02 stub → 明确报错", "尚未接入" in fr_stub.get("error", ""))
 
     print("\n" + "=" * 60)
     print(f"结果: {PASS} 通过, {FAIL} 失败")

@@ -32,12 +32,9 @@
       <li>LLM 模式: <span class="{{ 'ok' if llm_mode == 'mock' else 'warn' }}">{{ 'Mock（离线）' if llm_mode == 'mock' else '真实（联网）' }}</span></li>
     </ul>
     <div class="quick-links" style="margin-top:12px;">
-      <a href="{{ url_for('kbindex') }}">知识库</a> ·
-      <a href="{{ url_for('agent_page') }}">Agent 框架</a> ·
-      <a href="{{ url_for('playground') }}">游乐场</a> ·
-      <a href="{{ url_for('trace_page') }}">任务轨迹</a> ·
-      <a href="{{ url_for('log_page') }}">攻击历史</a> ·
-      <a href="{{ url_for('settings_page') }}">设置</a>
+      <a href="{{ url_for('kbindex') }}">知识库总览</a> ·
+      <a href="{{ url_for('learn_index') }}">学习路径</a> ·
+      <a href="{{ url_for('asi_page', demo_id='asi01') }}">预制演示</a>
     </div>
   </div>
 </div>

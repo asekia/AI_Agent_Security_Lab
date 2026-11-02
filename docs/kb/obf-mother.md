@@ -73,7 +73,6 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/defenses.py` | 检测规则的实现位置 |
 | `lab/memory.py` | 持久化类母句（F 类）的落点 |
 | `seed/documents/*.md` | 母句载体的文档样例 |
 

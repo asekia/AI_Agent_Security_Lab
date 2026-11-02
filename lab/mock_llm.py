@@ -4,12 +4,10 @@ MockLLM 根据场景（scenario）返回固定的工具调用序列，使攻击�
 在无 API key、无网络的情况下可复现。
 
 **注意**：本模块**只有**确定性模拟，get_llm() 永远返回 MockLLM。
-真实 LLM 不在这个模块里 —— 见 lab/framework/llm.py 的
 OpenAICompatChatModel，它读取 LLM_API_KEY / OPENAI_BASE_URL / LAB_MODEL。
 两套东西是分开的：
 
 - 本模块 + lab/graph.py + lab/runner.py  → 预制剧本（/asi/<id>），确定性
-- lab/framework/                        → 真实 LLM（/asi01/chat、/agent）
 
 本模块由 lab/graph.py 与 lab/runner.py 使用。
 """
@@ -180,6 +178,5 @@ def get_llm() -> MockLLM:
     """返回默认的 Mock LLM 实例。
 
     本函数**不读任何环境变量**，永远返回确定性模拟。
-    真实 LLM 后端在 lab/framework/llm.py。
     """
     return MockLLM()

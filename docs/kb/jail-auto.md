@@ -83,8 +83,6 @@ GCG（结构演示）
 | 本地位置 | 说明 |
 | --- | --- |
 | `lab/runner.py` | 越狱类场景的统一执行入口 |
-| `lab/framework/defenses.py` | 本地检测逻辑的实现位置 |
-| `lab/framework/llm.py` | 模型调用层，速率与配额控制应落在这一层附近 |
 
 ## 8. 参考
 

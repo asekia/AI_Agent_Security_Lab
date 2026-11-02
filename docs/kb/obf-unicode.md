@@ -62,7 +62,6 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/defenses.py` | 归一化与字符过滤的实现位置 |
 | `seed/documents/*.md` | 含隐藏字符的文档载体 |
 | `web/markdown.py` | 渲染层，可观察显示与实际的差异 |
 

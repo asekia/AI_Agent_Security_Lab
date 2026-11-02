@@ -86,7 +86,6 @@
 | --- | --- |
 | `lab/memory.py` | 本地记忆与召回实现，对应向量库的检索职责 |
 | `seed/documents/*.md` | 被索引的内容样例 |
-| `lab/framework/registry.py` | 资源登记，对应资产清点 |
 
 ## 8. 参考
 

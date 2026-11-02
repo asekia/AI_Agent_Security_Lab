@@ -69,7 +69,6 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/defenses.py` | 还原与检测逻辑的实现位置 |
 | `seed/documents/*.md` | 分段承载的文档样例 |
 | `lab/memory.py` | 多段内容召回与拼接的路径 |
 

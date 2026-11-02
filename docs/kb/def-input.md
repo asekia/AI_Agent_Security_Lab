@@ -68,9 +68,7 @@
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/defenses.py` | 本地防御与检测实现 |
 | `web/markdown.py` | 白名单式渲染，可对照"正确的输出侧处理" |
-| `lab/framework/chat_asi01.py` | ASI01 输入处理流程 |
 
 ## 8. 参考
 

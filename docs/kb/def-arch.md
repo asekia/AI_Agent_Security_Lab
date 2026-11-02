@@ -63,7 +63,6 @@
 | `lab/tools.py` | 工具与副作用的实现位置 |
 | `lab/graph.py` | 人工审批（HITL）链路 |
 | `lab/multi_agent.py` | 多体协作中的权限边界 |
-| `lab/framework/defenses.py` | 防御控制的落地位置 |
 
 ## 8. 参考
 

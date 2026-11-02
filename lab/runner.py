@@ -8,7 +8,7 @@
   保证 agent 行为与 demos/ 完全一致（漏洞行为不变）。
 - 通过 MockLLM 的确定性工具队列 + 图执行结果，重建每一步的
   {step, type, name, args, result} 结构化轨迹，供前端渲染。
-- legacy runner 默认使用本地 Mock；真实 LLM 由 framework 模块负责。
+- 默认使用本地 Mock（确定性、离线）；真实 LLM 通过环境变量接入。
 
 本模块仅用于本地演示和授权测试。
 """

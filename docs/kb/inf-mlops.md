@@ -150,7 +150,6 @@ IBM X-Force Red 在《Becoming the Trainer: Attacking ML Training Infrastructure
 
 | 本地位置 | 说明 |
 | --- | --- |
-| `lab/framework/registry.py` | 本地资源登记模块，对应"模型注册表"的概念 |
 | `lab/multi_agent.py` | 多智能体编排，可对照任务提交面 |
 | `web/app.py` | 本地服务入口，对应"未认证 DashBoard"的对照面 |
 

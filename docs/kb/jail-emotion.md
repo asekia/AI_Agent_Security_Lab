@@ -60,7 +60,6 @@
 | 本地位置 | 说明 |
 | --- | --- |
 | `lab/graph.py` | ASI09 人工审批与信任滥用相关链路 |
-| `lab/framework/defenses.py` | 本地检测逻辑的实现位置 |
 | `lab/runner.py` | 场景统一执行入口 |
 
 ## 8. 参考

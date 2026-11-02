@@ -61,7 +61,6 @@
 | --- | --- |
 | `lab/runner.py` | ASI01 / ASI09 场景的统一执行入口 |
 | `seed/documents/*.md` | 剧本类文档作为越狱载体的路径 |
-| `lab/framework/defenses.py` | 本地检测逻辑的实现位置 |
 
 ## 8. 参考
 
