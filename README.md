@@ -1,8 +1,6 @@
-# LangGraph 漏洞靶场 (langgraph-vuln-lab)
+# agent安全笔记
 
 可动手的 AI Agent 安全靶场：18 个关卡覆盖 **OWASP Agentic AI Top 10（ASI01–ASI10）** 与扩展攻击面，提交攻击载荷即可判定通关、取得 flag。默认离线运行，也可接入任意 OpenAI 兼容模型。
-
-> ⚠️ 本项目包含故意漏洞，仅用于本地学习与授权测试。
 
 ---
 

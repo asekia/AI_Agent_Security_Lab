@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}LangGraph 漏洞靶场{% endblock %}</title>
+  <title>{% block title %}agent安全笔记{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% block extra_head %}{% endblock %}
 </head>
@@ -17,7 +17,7 @@
   <nav class="global-nav">
     <div class="nav-inner">
       <a class="brand" href="{{ url_for('index') }}">
-        <span class="brand-name">LangGraph 漏洞靶场</span>
+        <span class="brand-name">agent安全笔记</span>
       </a>
       <div class="nav-right">
         <a class="nav-utility" href="{{ url_for('agent_page') }}">Agent 框架</a>
@@ -90,7 +90,7 @@
         {% block content %}{% endblock %}
       </div>
       <footer class="footer">
-        LangGraph 漏洞靶场 · 仅限授权安全教学演示 · 绑定 127.0.0.1
+        agent安全笔记 · 仅限授权安全教学演示 · 绑定 127.0.0.1
       </footer>
     </main>
   </div>

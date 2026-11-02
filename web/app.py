@@ -1,4 +1,4 @@
-"""web/app.py — LangGraph 漏洞靶场 Web 界面（Flask）。
+"""web/app.py — agent安全笔记 Web 界面（Flask）。
 
 提供 ASI01–ASI10 演示、工具轨迹、游乐场和真实 LLM 配置。
 邮件结果只写入本地 outbox；真实 LLM 是否联网由设置决定。
@@ -936,7 +936,7 @@ def main() -> None:
     """启动 Flask 开发服务器（仅绑定 127.0.0.1）。"""
     print_banner()
     print("=" * 60)
-    print("  LangGraph 漏洞靶场 Web 界面")
+    print("  agent安全笔记 Web 界面")
     print("  请在浏览器打开: http://127.0.0.1:5000")
     print("  注意: 仅绑定 127.0.0.1，绝不暴露到网络。")
     print("=" * 60)

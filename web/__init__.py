@@ -1,1 +1,1 @@
-"""web 包 — LangGraph 漏洞靶场 Web 界面。"""
+"""web 包 — agent安全笔记 Web 界面。"""

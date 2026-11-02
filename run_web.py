@@ -1,4 +1,4 @@
-"""run_web.py — 启动 LangGraph 漏洞靶场 Web 界面。
+"""run_web.py — 启动 agent安全笔记 Web 界面。
 
 用法:
     python run_web.py
