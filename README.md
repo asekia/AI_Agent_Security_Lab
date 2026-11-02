@@ -2,8 +2,7 @@
 
 可动手的 AI Agent 安全靶场：18 个关卡覆盖 **OWASP Agentic AI Top 10（ASI01–ASI10）** 与扩展攻击面，提交攻击载荷即可判定通关、取得 flag。默认离线运行，也可接入任意 OpenAI 兼容模型。
 
-> ⚠️ **安全警告**：本项目包含故意漏洞，仅用于本地学习和授权测试。
-> 邮件只写入本地 outbox；接入真实 LLM 时会按配置访问对应接口。
+> ⚠️ 本项目包含故意漏洞，仅用于本地学习与授权测试。
 
 ---
 
@@ -47,8 +46,6 @@ python demos\asi10_rogue_agent.py
 python demos\agent_asi01.py                # mock 后端，无防御（预期: 劫持成功）
 python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期: 未劫持）
 ```
-
-> 默认使用本地 Mock；真实 LLM 模式会访问你在设置中配置的兼容接口。
 
 ---
 
@@ -102,9 +99,7 @@ python demos\agent_asi01.py --defense      # mock 后端 + 防御变体（预期
 
 ## 3. ASI → 组件映射表（命名对齐 OWASP Agentic AI Top 10 · 2026）
 
-> ASI 编号有新旧草案之分。下表以 **OWASP 2026 官方定义**为准：
-> ASI03=身份与权限滥用、ASI07=不安全代理间通信、ASI08=级联故障、ASI10=失控代理。
-> 项目内可用 `python demos/asiNN_*.py` 或 Web「/asi/<id>」逐项演示。
+> ASI 编号有新旧草案之分，下表以 **OWASP 2026 官方定义**为准。
 
 | ASI | 漏洞名称 (2026 官方) | 组件 / 位置 | 漏洞注释 | 安全变体 |
 |-----|----------------------|-------------|----------|----------|
@@ -154,7 +149,7 @@ python smoke_test.py
 ```
 
 ### 真实 LLM 模式（可选）
-通过环境变量启用（需自行提供 API key，**默认路径不需要**）：
+通过环境变量启用：
 
 ```powershell
 $env:LLM_PROVIDER = "openai"   # 或 anthropic
@@ -162,7 +157,7 @@ $env:LLM_API_KEY = "sk-..."
 python demos\asi01_goal_hijack.py
 ```
 
-> 真实模式会引入非确定性，且可能产生真实网络调用——**仅在你有意测试真实模型时使用**。
+> 真实模式输出不确定，并会产生真实网络调用。
 
 ### Agent 框架真实后端（OpenAI 兼容端点）
 
@@ -176,13 +171,11 @@ $env:LAB_MODEL       = "deepseek-chat"
 python demos\agent_asi01.py --backend real
 ```
 
-> 真实模型对隐藏注入载荷的反应**不确定**（可能被劫持、也可能拒绝）——这正是
-> 框架版相比脚本化 mock 的教学差异点：漏洞是否被触发由真实模型的行为决定。
+> 真实模型对注入载荷的反应不确定：可能被劫持，也可能拒绝。
 
 ### 水印对抗实验（离线可跑，不发 flag）
 
-`lab/watermark` 把水印的窃取 / 伪造 / 清洗做成**可测量的实验**，
-输出对照矩阵与曲线，而不是"播放预录结论"：
+`lab/watermark` 提供水印窃取 / 伪造 / 清洗的可测量实验，输出对照矩阵与曲线：
 
 ```powershell
 # 对照矩阵（TPR@FPR、保真度、窃取成本与规则质量）
@@ -201,11 +194,10 @@ python -c "from lab.watermark import lab; d=lab.schemecmp(reps=12, n=200, n_quer
 python test_watermark.py
 ```
 
-> 这是**测量制**而非 flag 制：水印对抗的结论依赖 FPR 与文本长度，
-> 用"过/不过"表示会掩盖前提。原理见知识库「对抗水印攻击」条目，界面见 `/watermark`。
+> 水印结论依赖 FPR 与文本长度，用"过/不过"表示会掩盖前提，因此采用测量制。
 
-### Web 模式（可选，推荐用于演示）
-提供一个本地、离线的中文 Web 界面（DVWA/DVAIA 风格），用于查看漏洞映射表、运行攻击演示并查看结构化工具调用轨迹、在"游乐场"中输入自定义提示词、检查本地 sink、切换 mock / 真实 LLM 模式。
+### Web 模式
+本地、离线的中文 Web 界面（DVWA/DVAIA 风格）：
 
 ```powershell
 # 1. 安装 Web 依赖（Flask）
@@ -219,7 +211,9 @@ python run_web.py
 ```
 
 Web 界面页面：
-- `/` 仪表盘：ASI01-ASI10 映射表 + 组件状态 + 快捷入口
+- `/` 仪表盘：学习路径进度 + ASI 主题矩阵 + 组件状态
+- `/learn` **学习路径**：3 条路径 21 个单元（读文档 / 打关卡 / 验证题，全部客观判定）
+- `/topic/<asi>` **ASI 主题整合页**：原理全文 + 目录 + 动手关卡 + 相关知识
 - `/arena` **可动手靶场**：18 个关卡（ASI01–ASI10 + MCP / A2A / 向量库 / 模型文件 / 多模态 / 护栏 / 推理服务 / 自治），每关 low / medium / high 三档，提交攻击载荷判定通关并发放 flag
 - `/asi/<id>` 单个演示页（asi01 / asi02 / asi06 / asi07 / asi09）：运行并查看工具调用轨迹
 - `/agent` **Agent 框架页**：场景选择（当前仅 ASI01 接入）+ mock/真实后端切换 + 防御变体开关 + 推理轨迹与劫持裁决
@@ -227,7 +221,7 @@ Web 界面页面：
 - `/playground` 游乐场：自定义提示词 + 单/多 Agent 模式 + 揭示隐藏注入载荷
 - `/kb` 知识库：53 篇攻防文档（按分组浏览）
 - `/selfaudit` 自评：以本机 Agent 实例为对象的一键自评
-- `/watermark` **水印对抗实验**：跑真实的水印 → 窃取 → 伪造 → 清洗全链条，输出对照矩阵、预算扫描曲线与防御实测（限流/轮换/扰动）（测量页，不发 flag）
+- `/watermark` **水印对抗实验**：水印 → 窃取 → 伪造 → 清洗的对照矩阵、预算扫描与防御实测（测量页，不发 flag）
 - `/trace` 最近一次运行的完整轨迹
 - `/log` 攻击历史（持久化到 `lab/web/run_log.jsonl`）
 - `/settings` mock / 真实 LLM 模式切换与 key 管理
@@ -247,8 +241,8 @@ langgraph-vuln-lab/
 │   ├── tools.py              # 工具集（含漏洞 + 安全变体）
 │   ├── memory.py             # 向量记忆（ASI06）
 │   ├── checkpointer.py       # SqliteSaver 持久化
-│   ├── mock_llm.py           # 确定性 mock LLM（旧版脚本化）
-│   ├── graph.py              # 单 Agent HITL 图（旧版）
+│   ├── mock_llm.py           # 确定性 mock LLM
+│   ├── graph.py              # 单 Agent HITL 图
 │   ├── multi_agent.py        # 多 Agent supervisor 图（ASI07/08）
 │   ├── framework/            # ★ Agent 框架（LangChain/LangGraph，真实 AI 接入）
 │   │   ├── __init__.py       #    get_framework() 统一入口
@@ -295,9 +289,9 @@ langgraph-vuln-lab/
 │       ├── rules.md          # 被污染的"第三方规则包"（ASI04 供应链演示）
 │       └── support_kb.md     # 含隐藏注入载荷（ASI01）
 ├── web/                      # Web 界面（Flask）
-│   ├── app.py                # 路由 + JSON API（含 /agent 与 /principle）
+│   ├── app.py                # 路由 + JSON API
 │   ├── markdown.py           # 极简安全 Markdown 渲染（原理文档页）
-│   ├── templates/            # 页面模板（含 agent.html / principle.html）
+│   ├── templates/            # 页面模板
 │   └── static/style.css      # 本地样式
 ├── docs/
 │   ├── kb/                   # 知识库 53 篇（基础/注入/混淆/越狱/模型/上下文/智能体/协议/基础设施/防御/案例）
@@ -318,7 +312,7 @@ langgraph-vuln-lab/
 
 ## 7. 防御侧（安全变体）
 
-本项目不仅演示漏洞，还提供对应的**安全对照实现**，用于教学：
+安全对照实现：
 
 | 漏洞 | 安全变体 | 防御原理 |
 |------|----------|----------|
@@ -395,8 +389,6 @@ python demos\agent_asi01.py --backend real
 | ASI08 级联代理故障 | `docs/asi08-principle.md` | `/principle/asi08` |
 | ASI09 人机信任滥用 | `docs/asi09-principle.md` | `/principle/asi09` |
 | ASI10 失控代理 | `docs/asi10-principle.md` | `/principle/asi10` |
-
-> Web 端可从侧栏“原理文档”进入对应页面。
 
 ### 8.3 接入新场景（ASI02 等）
 
