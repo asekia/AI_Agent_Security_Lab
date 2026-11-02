@@ -115,14 +115,6 @@ def index():
     from lab.asi_map import ASI
     from lab.runner import DEMOS
 
-    # 组件状态
-    venv_ok = os.path.exists(os.path.join(ROOT, ".venv", "Scripts", "python.exe"))
-    deps_ok = True
-    try:
-        import langgraph  # noqa: F401
-        import flask  # noqa: F401
-    except ImportError:
-        deps_ok = False
     topics = []
     for n in range(1, 11):
         tid = f"asi{n:02d}"
@@ -138,9 +130,6 @@ def index():
         "index.html",
         topics=topics,
         learn_paths=learn.allrows(),
-        venv_ok=venv_ok,
-        deps_ok=deps_ok,
-        llm_mode=os.environ.get("LAB_LLM_MODE", "mock"),
     )
 
 

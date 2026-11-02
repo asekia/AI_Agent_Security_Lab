@@ -9,34 +9,18 @@
   </div>
 </section>
 
-<div class="cards">
-  <div class="card">
-    <h3>学习路径</h3>
-    <table class="asi-table">
-      <tr><th>路径</th><th style="width:18%;">单元</th></tr>
-      {% for pt in learn_paths %}
-      <tr>
-        <td><a href="{{ url_for('learn_path_page', pid=pt.pid) }}">{{ pt.title }}</a>
-            <span class="muted">· {{ pt.en }}</span></td>
-        <td>{{ pt.total }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <div class="card">
-    <h3>组件状态</h3>
-    <ul class="status-list">
-      <li>虚拟环境 (.venv): <span class="{{ 'ok' if venv_ok else 'bad' }}">{{ '正常' if venv_ok else '缺失' }}</span></li>
-      <li>依赖 (langgraph/flask): <span class="{{ 'ok' if deps_ok else 'bad' }}">{{ '正常' if deps_ok else '缺失' }}</span></li>
-      <li>LLM 模式: <span class="{{ 'ok' if llm_mode == 'mock' else 'warn' }}">{{ 'Mock（离线）' if llm_mode == 'mock' else '真实（联网）' }}</span></li>
-    </ul>
-    <div class="quick-links" style="margin-top:12px;">
-      <a href="{{ url_for('kbindex') }}">知识库总览</a> ·
-      <a href="{{ url_for('learn_index') }}">学习路径</a> ·
-      <a href="{{ url_for('asi_page', demo_id='asi01') }}">预制演示</a>
-    </div>
-  </div>
+<div class="card">
+  <h3>学习路径</h3>
+  <table class="asi-table">
+    <tr><th>路径</th><th style="width:18%;">单元</th></tr>
+    {% for pt in learn_paths %}
+    <tr>
+      <td><a href="{{ url_for('learn_path_page', pid=pt.pid) }}">{{ pt.title }}</a>
+          <span class="muted">· {{ pt.en }}</span></td>
+      <td>{{ pt.total }}</td>
+    </tr>
+    {% endfor %}
+  </table>
 </div>
 
 <h2>ASI 主题</h2>
