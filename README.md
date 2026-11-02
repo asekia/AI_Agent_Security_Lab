@@ -2,11 +2,11 @@
 
 # agent安全笔记
 
-<img alt="tests" src="https://img.shields.io/badge/tests-52%20passing-brightgreen"> <img alt="python" src="https://img.shields.io/badge/python-3.12-blue"> <img alt="langgraph" src="https://img.shields.io/badge/LangGraph-1.2.11-purple"> <img alt="license" src="https://img.shields.io/badge/license-未指定-lightgrey">
+<img alt="tests" src="https://img.shields.io/badge/tests-52%20passing-brightgreen"> <img alt="python" src="https://img.shields.io/badge/python-3.12-blue"> <img alt="langgraph" src="https://img.shields.io/badge/LangGraph-1.2.11-purple"> <img alt="license" src="https://img.shields.io/badge/license-MIT-green">
 
 </div>
 
-AI Agent 安全知识库与本地实验环境：10 篇 ASI 原理文档、50 篇分类知识文档、3 条学习路径，配套可运行的攻击场景与本地 Web 站点。所有手法在本地模拟，无真实网络调用。
+AI Agent 安全知识库：10 篇 ASI 原理文档、50 篇分类知识文档、3 条学习路径。内容覆盖 OWASP Agentic AI Top 10 的逐项原理、攻击步骤、检测与防御。
 
 ## 目录
 
@@ -16,7 +16,6 @@ AI Agent 安全知识库与本地实验环境：10 篇 ASI 原理文档、50 篇
 - [页面与用法](#页面与用法)
 - [学习路径](#学习路径)
 - [内容规范](#内容规范)
-- [命令行演示](#命令行演示)
 - [目录结构](#目录结构)
 - [测试](#测试)
 - [贡献](#贡献)
@@ -25,16 +24,15 @@ AI Agent 安全知识库与本地实验环境：10 篇 ASI 原理文档、50 篇
 
 ## 项目简介
 
-本项目把 AI Agent 安全拆成可读、可查、可复现的三层：
+本项目把 AI Agent 安全拆成可读、可查、可复现的两层：
 
 | 层 | 内容 | 位置 |
 | --- | --- | --- |
 | 原理层 | OWASP Agentic AI Top 10（ASI01–ASI10）逐项原理、源码与防御 | `docs/asi01-principle.md` … `docs/asi10-principle.md` |
 | 知识层 | 11 个分类、50 篇攻防文档，统一论文体结构 | `docs/kb/` |
-| 实验层 | 确定性场景回放、工具层漏洞与安全对照实现 | `lab/`、`demos/` |
 
 > [!NOTE]
-> 内容仅用于授权安全测试与防御建设。所有邮件、命令与网络动作均在本地模拟或指向本地文件。
+> 内容仅用于授权安全测试与防御建设。
 
 ## 知识体系
 
@@ -129,24 +127,6 @@ python run_web.py
 8. 参考                一手来源
 ```
 
-## 命令行演示
-
-10 个 ASI 场景以确定性工具链回放，可离线运行：
-
-```bash
-python demos/asi01_goal_hijack.py
-python demos/asi02_tool_abuse.py
-python demos/asi03_priv_abuse.py
-python demos/asi04_supply_chain.py
-python demos/asi05_code_exec.py
-python demos/asi06_memory_poison.py
-python demos/asi07_msg_spoof.py
-python demos/asi08_cascade.py
-python demos/asi09_hitl_bypass.py
-python demos/asi10_rogue_agent.py
-```
-
-安全对照实现位于 `lab/tools.py`（`query_orders_safe` / `send_email_safe`）与 `lab/memory.py`（`memory_search_scoped`）。
 
 ## 目录结构
 
@@ -166,7 +146,6 @@ python demos/asi10_rogue_agent.py
 │   ├── tools.py          # 工具集（含安全对照）
 │   ├── memory.py         # 向量记忆（含会话隔离）
 │   └── runner.py         # 场景运行封装
-├── demos/                # 10 个 ASI 场景脚本
 ├── docs/
 │   ├── asi01-principle.md … asi10-principle.md
 │   └── kb/               # 50 篇分类知识文档
@@ -189,7 +168,7 @@ python smoke_test.py     # 10 项：场景、工具、记忆、多 Agent 链路
 
 ## 许可证
 
-仓库尚未添加 LICENSE 文件。使用、复制或分发前请自行确认授权范围；如需开源发布，建议先补充许可证（如 MIT 或 Apache-2.0）。
+本项目采用 [MIT License](LICENSE) 开源。
 
 ## 参考
 
