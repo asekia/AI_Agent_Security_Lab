@@ -79,10 +79,7 @@ python -m venv .venv
 # 3. 安装依赖
 pip install -r requirements.txt
 
-# 4. 生成种子数据（文档 + SQLite 订单库）
-python seed/seed_db.py
-
-# 5. 启动本地站点
+# 4. 启动本地站点
 python run_web.py
 ```
 
@@ -156,6 +153,9 @@ python run_web.py
 ## 测试
 
 ```bash
+# 首次运行冒烟测试前生成种子数据库（web 页面本身不需要）
+python seed/seed_db.py
+
 python test_web.py       # 42 项：页面可达性、内容契约、已删功能无残留
 python smoke_test.py     # 10 项：场景、工具、记忆、多 Agent 链路
 ```
