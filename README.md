@@ -6,6 +6,10 @@
 
 </div>
 
+<p align="center">
+🇨🇳 <a href="./README.md">简体中文</a> | 🇺🇸 <a href="./README.en.md">English</a>
+</p>
+
 AI Agent 安全知识库：10 篇 ASI 原理文档、50 篇分类知识文档、3 条学习路径。内容覆盖 OWASP Agentic AI Top 10 的逐项原理、攻击步骤、检测与防御。
 
 ## 目录
@@ -85,8 +89,6 @@ python run_web.py
 
 浏览器打开 `http://127.0.0.1:5000`。服务仅绑定回环地址。
 
-> [!WARNING]
-> 不要将本服务绑定到 `0.0.0.0` 或暴露到公网。所有场景均为教学用途。
 
 ## 页面与用法
 
