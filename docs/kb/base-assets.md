@@ -61,15 +61,7 @@ AI 系统的资产不止模型权重。把资产拆成六类，才能逐类回�
 每个高风险资产至少补一条硬约束：签名、白名单、审核、隔离
 ```
 
-## 5. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `seed/documents/*.md` | 可被外部写入的内容资产（演示） |
-| `lab/memory.py` | 记忆/嵌入资产的写入与检索路径 |
-| `lab/tools.py` | 工具描述与执行入口 |
-
-## 6. 参考
+## 5. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM03 / LLM04 / LLM08：https://genai.owasp.org/llm-top-10/
 - MITRE ATLAS：https://atlas.mitre.org/

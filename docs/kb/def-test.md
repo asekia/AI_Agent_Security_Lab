@@ -101,16 +101,7 @@
 [ ] 日志可回答"是哪个输入导致了哪个动作"
 ```
 
-## 7. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `smoke_test.py` | 端到端冒烟（10 项），可作为评测驱动参照 |
-| `test_web.py` | 页面可达性与内容契约（44 项），含"已删功能无残留"断言 |
-| `docs/kb/def-input.md` | 输入侧控制点 |
-| `docs/kb/def-arch.md` | 架构侧硬约束 |
-
-## 8. 参考
+## 7. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM01 / LLM06：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI09：https://genai.owasp.org/

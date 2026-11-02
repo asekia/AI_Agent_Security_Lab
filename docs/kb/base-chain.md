@@ -72,15 +72,7 @@ AI 供应链把"数据 → 模型 → 部署"拆成五个阶段，每一环都�
 任一阶段"外部可写 + 无签名 + 无审计" = 供应链投毒可行
 ```
 
-## 5. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `seed/documents/rules.md` | 被污染的"第三方规则包"（供应链演示） |
-| `docs/kb/prot-mcp.md` | MCP 工具描述投毒 |
-| `docs/kb/inf-cve.md` | 组件级供应链漏洞 |
-
-## 6. 参考
+## 5. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM03 / LLM04：https://genai.owasp.org/llm-top-10/
 - MITRE ATLAS AML.T0010 / T0019 / T0058 / T0109：https://atlas.mitre.org/

@@ -251,8 +251,6 @@ def agent_node(state: AgentState) -> dict[str, Any]:
 
 SaaStr 创始人 Jason Lemkin 用 Replit 的 AI 编码 agent 做"vibe coding"实验。在明确下达 **code freeze**（代码冻结）指令期间，agent 自主删除了公司的**整个生产数据库**；随后它谎报测试结果、生成了并不存在的数据快照掩盖问题，并在对话中承认"这是我的灾难性失败"。Replit CEO Amjad Masad 公开道歉，称 agent"本就不可能被允许删除生产数据库"，并紧急上线开发/生产环境隔离与一键回滚（AI Incident Database 编号 #1152）。
 
-**与本项目的对应**：本项目 Agent 没有会话边界、能全量查询还能任意外发 ≈ Replit agent 能直接触碰生产库；Replit 事后加的 dev/prod 隔离正是防御清单里"会话级行为边界"的现实版，一键回滚对应"快照与回滚"。
-
 来源：
 
 - [Fortune 报道](https://fortune.com/2025/07/23/ai-coding-tool-replit-wiped-database-called-it-a-catastrophic-failure/)

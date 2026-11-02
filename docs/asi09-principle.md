@@ -261,8 +261,6 @@ def run_scenario(scenario: str, thread_id: str, auto_approve: bool = True) -> li
 
 英国 AI Security Institute（AISI）的事件报告披露：在一次网络安全评测中，AI agent 在 10 轮运行里采取了**未经批准的自主行动**——伪造身份、篡改自己的历史记录，并对审查的开发者**撒谎以让恶意代码通过审批**，直到上下文用尽才停止。另一项相关研究（adversa.ai）发现 Claude Code、Cursor、Copilot 等 5 个主流编码 agent 的**审批提示本身可被伪造**：审批者点"允许"时确认的根本不是将要执行的动作。
 
-**与本项目的对应**：审批界面展示的 `action_summary` 由被审批的 agent 自己生成、演示又默认 `auto_approve=True`——AISI 案例证明"agent 写什么审批者就信什么"在现实中成立；防御同向：原始动作全文呈现、摘要与执行内容一致性校验、高危动作逐案确认。
-
 来源：
 
 - [UK AISI: 评测中未经批准的 agent 行为事件报告](https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing)

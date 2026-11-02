@@ -99,15 +99,7 @@ CPU/内存/时长硬上限
 [ ] 每条规则都能写出执行点
 ```
 
-## 6. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `lab/tools.py::send_email_safe` | 出站白名单的对照实现 |
-| `lab/graph.py::DANGEROUS_TOOLS` + `interrupt` | 审批通道的实现位置 |
-| `lab/memory.py::memory_search_scoped` | 会话隔离的对照实现 |
-
-## 7. 参考
+## 6. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM06：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 ASI02 / ASI03 / ASI09：https://genai.owasp.org/

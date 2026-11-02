@@ -55,15 +55,7 @@
 3. 对每条命中，回到分层表（见 atk-assemble）确认是否有硬约束。
 4. 只有软约束的条目进入整改清单。
 
-## 5. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `lab/asi_map.py` | ASI 名称与组件映射的唯一来源 |
-| `docs/asi*-principle.md` | 十个 ASI 的原理与实战 |
-| `docs/kb/atk-*.md` | 从编号落到攻击面的实战文档 |
-
-## 6. 参考
+## 5. 参考
 
 - OWASP Top 10 for LLM Applications (2025)：https://genai.owasp.org/llm-top-10/
 - OWASP Agentic AI Top 10 (2026)：https://genai.owasp.org/

@@ -226,8 +226,6 @@ if not to.endswith("@internal.lab"):
 
 攻击者在**公开 GitHub 仓库**的 issue 里埋入提示注入。当用户让 Claude Desktop、Cursor 这类带 GitHub MCP 工具的 agent 处理这个 issue 时，注入指令劫持 agent，把用户**私有仓库**的数据外传到攻击者控制的位置。研究的关键结论：MCP server 代码本身没有 bug——问题出在"公共内容与私有凭证共用同一个 agent"的架构上，且当时没有显而易见的修复。
 
-**与本项目的对应**：`rules.md` 未经校验即被信任 ≈ MCP 工具返回的 issue 内容即被信任。防御同向：外部内容一律当数据；来源签名、组件白名单、信任边界隔离，都要在架构层解决而不是等某个组件"修好"。
-
 来源：
 
 - [Invariant Labs: GitHub MCP Exploited](https://invariantlabs.ai/blog/mcp-github-vulnerability)

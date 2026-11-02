@@ -85,15 +85,7 @@ T0057       → 本地数据被读取
 
 用 `AML.CSxxxx` 对照真实事件，检查自己的防护是否覆盖同类路径。
 
-## 4. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `docs/kb/inj-*.md` | T0051 家族的技术展开 |
-| `docs/kb/inf-*.md` | T0049 / T0085 的基础设施侧 |
-| `docs/kb/atk-chain.md` | 多技术串联的完整链条 |
-
-## 5. 参考
+## 4. 参考
 
 - MITRE ATLAS：https://atlas.mitre.org/
 - OWASP Agentic AI Top 10：https://genai.owasp.org/

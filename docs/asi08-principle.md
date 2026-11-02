@@ -238,8 +238,6 @@ def worker_c(state: CascadeState) -> dict[str, Any]:
 
 同一个 Drift 事件，从级联视角看：一个第三方 SaaS 集成被攻陷（上游故障）→ OAuth/刷新令牌被窃（未校验的信任传递）→ 攻击者沿集成信任链进入**每一家接入客户**的 Salesforce org 与 Google Workspace → 数百家企业的数据被批量外带（下游放大）。FINRA 与 Mandiant 都把它当作供应链信任链级联的标志性案例——故障沿信任链逐跳放大，而不是停在失守的第一环。
 
-**与本项目的对应**：`worker_a` 一条未验证断言沿信任链放大为全库外泄，正是这个事件的最小模型；防御同向：每一跳独立校验上游断言、限制爆炸半径（blast radius）、失败熔断。
-
 来源：
 
 - [Google Cloud / Mandiant: UNC6395 溯源](https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift)

@@ -247,8 +247,6 @@ def send_email(to: str, subject: str, body: str) -> str:
 
 攻击者向 Amazon Q Developer VS Code 扩展的开源仓库提交恶意提交，载荷是一段"破坏性 AI 提示"——它不新增任何工具，而是指示 AI agent 用它**本来就有**的终端与文件工具去清除本地文件、删除云资源。该版本随扩展分发给近百万用户；AWS 证实载荷因格式缺陷**未能执行**（AWS-2025-015 / GHSA-7g7f-ff96-5gcw），但链路完全成立：工具全部合法，用途被掉包。OWASP 2026 把它列为 ASI02 的代表案例——"Agent 把合法工具弯折成破坏性输出"。
 
-**与本项目的对应**：`query_orders` 的合法 SQL 能力被转向读全库 ≈ Q 的合法命令工具差点被转向清库。防御同向：工具能力按用途收窄（业务参数化），破坏性出口要有独立拦截，而不是依赖"工具本身没越权"。
-
 来源：
 
 - [AWS 安全公告 AWS-2025-015](https://aws.amazon.com/security/security-bulletins/AWS-2025-015/)

@@ -51,15 +51,7 @@ STRIDE 是经典威胁建模框架：**S**poofing（仿冒）、**T**ampering（
 
 只写"有风险"不算结论；必须落到"缺失的硬约束"。
 
-## 4. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `docs/kb/atk-recon.md` | 八维度权限面（执行面与出口面） |
-| `docs/kb/atk-assemble.md` | 仿冒与泄露（提示层级） |
-| `docs/kb/atk-chain.md` | 篡改→提权→泄露的链条 |
-
-## 5. 参考
+## 4. 参考
 
 - OWASP Agentic AI Top 10：https://genai.owasp.org/
 - MITRE ATLAS：https://atlas.mitre.org/

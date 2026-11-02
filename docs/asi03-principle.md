@@ -247,8 +247,6 @@ def send_email(to: str, subject: str, body: str) -> str:
 
 攻击组织 UNC6395（关联 ShinyHunters）窃取了 AI 聊天 agent Drift 的 OAuth 令牌，随后以这个"合法 agent"的身份批量访问 700 余家企业的 Salesforce 实例与 Google Workspace 邮箱。服务端看到的每一次请求都来自持有合法凭证的 agent——它无法分辨背后是客户意图还是攻击者意图，这正是典型的 **confused deputy（混乱代理人）**。Mandiant/Google 溯源披露，被广泛称为 2025 年最大 SaaS 泄露事件之一。
 
-**与本项目的对应**：一个 OAuth 令牌等于全部授权 ≈ 本项目里"Agent 声称提权"无人验证、`execute_python` 直接继承宿主身份。防御同向：短时效、窄作用域的凭证，越范围访问独立校验，凭证生命周期可吊销。
-
 来源：
 
 - [Google Cloud / Mandiant 溯源分析](https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift)

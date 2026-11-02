@@ -239,8 +239,6 @@ if name in DANGEROUS_TOOLS:
 
 positive.security 的研究演示：通过**间接提示注入**诱导 Auto-GPT 在执行"看似无害的任务"时运行任意代码，并实现 **Docker 容器逃逸**。CVE-2023-37274 则显示：当用户用 run.sh/run.bat 把 Auto-GPT 直接跑在宿主机上时，沙箱不完整，攻击者可绕过沙箱执行任意代码。OWASP 2026 把 AutoGPT RCE 列为 ASI05 的代表案例——"自然语言到执行路径的新通道创造了新的 RCE 面"。
 
-**与本项目的对应**：`execute_python` 用 subprocess 直接跑在宿主上，正是 CVE-2023-37274 的最小复现；防御同向：生成与执行分离、非 root 沙箱、资源与网络出站管控。
-
 来源：
 
 - [positive.security: Hacking Auto-GPT and Escaping Its Docker Container](https://positive.security/blog/auto-gpt-rce)

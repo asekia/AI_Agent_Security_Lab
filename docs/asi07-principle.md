@@ -224,8 +224,6 @@ def data_worker(state: MultiAgentState) -> dict[str, Any]:
 
 ACL 2025 Findings 论文 *Red-Teaming LLM Multi-Agent Systems via Communication Attacks* 提出 **Agent-in-the-Middle（AiTM）**攻击：拦截并篡改 LLM 多 agent 系统中 agent 之间的消息，把整个任务引向攻击者目标——不需要攻破任何一个 agent 本体。Trail of Bits 2025 年 7 月的 **pajaMAS** 系列给出多 agent 劫持的公开复现演示。这类研究证明：只要消息通道没有认证与完整性保护，集群里任何一个节点都能被"替身指挥"。
 
-**与本项目的对应**：`email_worker` 伪造 sender 字段 ≈ AiTM 篡改消息流；`data_worker` 只比较 sender 字符串 ≈ 无认证信道。防御同向：消息签名 + nonce/时间戳 + 接收方独立授权。
-
 来源：
 
 - [ACL 2025 Findings: AiTM 论文](https://aclanthology.org/2025.findings-acl.349.pdf)

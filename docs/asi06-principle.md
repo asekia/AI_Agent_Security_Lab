@@ -254,8 +254,6 @@ def _memory_search(args: dict[str, Any]) -> str:
 
 安全研究员 Johann Rehberger（Embrace The Red）演示：藏在共享内容（文档、邮件等）里的间接提示注入可以诱导 Google Gemini 把恶意指令写进它的**长期记忆**。会话结束后污染依然存在——之后每一次相关对话里，Gemini 都会把被投毒的记忆当作用户的真实偏好来执行。InfoQ 与 Ars Technica 均有报道；Google 于同年 5 月发表了针对间接提示注入的防御论文。
 
-**与本项目的对应**：`memory_write` 不校验内容、`memory_search` 不按会话隔离，正是这个现实漏洞的最小模型；`memory_search_scoped` 的会话隔离、写入扫描、快照回滚是同一防御方向。
-
 来源：
 
 - [Embrace The Red: Hacking Gemini's Memory with Prompt Injection](https://embracethered.com/blog/posts/2025/gemini-memory-persistence-prompt-injection/)

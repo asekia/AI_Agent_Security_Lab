@@ -114,15 +114,7 @@ def suspicious(text: str) -> list[str]:
 [ ] 指令边界写入系统提示且每轮重申
 ```
 
-## 6. 与本项目的对应
-
-| 本地位置 | 说明 |
-| --- | --- |
-| `lab/tools.py::read_document` | 输入原样返回的对照点 |
-| `lab/mock_llm.py` | 场景化载荷（用于回归） |
-| `docs/kb/obf-*.md` | 绕过变体目录 |
-
-## 7. 参考
+## 6. 参考
 
 - OWASP Top 10 for LLM Applications (2025) LLM01：https://genai.owasp.org/llm-top-10/
 - Unicode TR39：https://www.unicode.org/reports/tr39/
