@@ -25,6 +25,7 @@ from lab import kb_map  # noqa: E402
 from lab import learn  # noqa: E402
 from lab import levels  # noqa: E402
 from lab import llmconf  # noqa: E402
+from lab import selfaudit  # noqa: E402
 from lab import solves  # noqa: E402
 from lab import runner  # noqa: E402
 from lab.banner import print_banner  # noqa: E402
@@ -450,6 +451,25 @@ def learn_path_page(pid: str):
         "path.html",
         p={"pid": p["pid"], "title": p["title"], "en": p["en"], "desc": p["desc"]},
         units=learn.unitrows(pid),
+    )
+
+
+@app.route("/selfaudit")
+def selfaudit_page():
+    """Agent 权限面自评页：以本实例为对象运行只读自评，展示判定与证据。"""
+    rows = selfaudit.audit()
+    order = {"RISK": 0, "WARN": 1, "OK": 2}
+    rows = sorted(rows, key=lambda r: order.get(r["level"], 3))
+    counts = {"RISK": 0, "WARN": 0, "OK": 0}
+    for r in rows:
+        counts[r["level"]] = counts.get(r["level"], 0) + 1
+    return render_template(
+        "selfaudit.html",
+        rows=rows,
+        counts=counts,
+        total=len(rows),
+        declared=selfaudit.DECLARED,
+        tools=selfaudit.TOOLS,
     )
 
 

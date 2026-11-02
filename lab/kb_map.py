@@ -198,6 +198,22 @@ KB_GROUPS = [
              "测试集设计、误报控制与上线自检项。"),
         ],
     ),
+    (
+        "atk",
+        "Agent 攻击面实战",
+        "Agent Attack Surface in Practice",
+        "把原理落到具体攻击面上：提示词装配结构、沙箱读写边界、权限面侦察与完整攻击链推演。",
+        [
+            ("atk-assemble", "系统提示词装配结构与注入测试面", "System Prompt Assembly & Injection Surface",
+             "装配顺序区间、软/硬约束分层，以及八类注入测试的载荷与判定方法。"),
+            ("atk-boundary", "沙箱读写边界与跨项目数据读取", "Sandbox Read/Write Boundary",
+             "workspace-write 只强制写入不强制读取；六步复现与多帧解压陷阱。"),
+            ("atk-recon", "Agent 权限面侦察清单", "Agent Privilege Surface Reconnaissance",
+             "八维度画像 + 九项检查清单，附只读自检工具与证据标准。"),
+            ("atk-chain", "针对编码 Agent 的六阶段攻击链", "Six-Stage Attack Chain",
+             "植入→摄入→触发→落地→放大→外带，逐阶段切断点与加固优先级。"),
+        ],
+    ),
 ]
 
 # slug -> 文档元数据（由 KB_GROUPS 派生，避免两处维护）
