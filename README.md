@@ -218,9 +218,6 @@ python run_web.py
 #    http://127.0.0.1:5000
 ```
 
-> ⚠️ **安全**：Web 服务器**仅绑定 127.0.0.1**，绝不暴露到网络。所有资源均为本地（无外部 CDN）。真实 LLM 模式仅在 `/settings` 中显式开启时才会发起网络调用。
-> API key 默认只在进程内存；只有勾选"记住 key"才会明文写入 `lab/llm.json`（已 gitignore），可随时用"清除已保存的 key"移除。
-
 Web 界面页面：
 - `/` 仪表盘：ASI01-ASI10 映射表 + 组件状态 + 快捷入口
 - `/arena` **可动手靶场**：18 个关卡（ASI01–ASI10 + MCP / A2A / 向量库 / 模型文件 / 多模态 / 护栏 / 推理服务 / 自治），每关 low / medium / high 三档，提交攻击载荷判定通关并发放 flag
@@ -336,10 +333,6 @@ langgraph-vuln-lab/
 ---
 
 ## 8. Agent 框架（LangChain / LangGraph 真实 AI 接入）
-
-> 针对旧版"脚本化 MockLLM 脱节、无法接入真实 AI"的痛点，
-> 靶场新增 `lab/framework/`：基于 **LangChain 官方抽象** 的标准 Agent 框架。
-> 目前 Agent 框架接入 ASI01；ASI02–ASI10 保留为扩展位。
 
 ### 8.1 设计
 
